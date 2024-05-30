@@ -1,0 +1,23 @@
+name: Testing
+
+#on: [push]
+on:
+    workflow_call:
+jobs:
+    docker-unit-tests:
+        runs-on: ubuntu-latest
+        name: Build and run unit tests Docker image
+        steps:
+        
+          - name: Check out this repo
+            uses: actions/checkout@v3
+            
+          - name: Build Docker image
+            run: docker build -t unit-tests-image -f actions/Dockerfile .
+            
+          - name: Linting
+            run: docker run -i --rm unit-tests-image bash  -c "make lint -C /project"
+            
+          - name: Unit test
+            run: docker run -i --rm unit-tests-image bash  -c "make test -C /project"
+            #-run docker run -it --rm unit-test-image bash  -c "make test -C /project && make test_clean -C /project"    
