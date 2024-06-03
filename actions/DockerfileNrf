@@ -64,10 +64,10 @@ RUN west update --narrow -o=--depth=1
 
 # Copy project into image
 RUN mkdir /workdir/project
-COPY ../src /workdir/project/src
-COPY ../prj.conf /workdir/project/prj.conf
-COPY ../nrf52832_mdk.overlay /workdir/project/nrf52832_mdk.overlay
-COPY ../CMakeLists.txt /workdir/project/CMakeLists.txt
+COPY ..app/src /workdir/project/src
+COPY ..app/prj.conf /workdir/project/prj.conf
+COPY ..app/boards/nrf52832_mdk.overlay /workdir/project/nrf52832_mdk.overlay
+COPY ..app/CMakeLists.txt /workdir/project/CMakeLists.txt
 
 # clone definitions for mdbt42 board
 RUN git clone https://github.com/kristosb/nordic-boards-mdbt42q.git /workdir/zephyr/boards/arm/mdbt42q_nrf52

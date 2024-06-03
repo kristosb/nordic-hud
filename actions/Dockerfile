@@ -7,7 +7,7 @@ RUN apt update && \
 	
 # Copy project into image
 RUN mkdir /project
-COPY ../src /project/src
+COPY ..app/src /project/src
 COPY ../tests /project/tests
 COPY ../lint /project/lint
 COPY ../Makefile /project/Makefile
