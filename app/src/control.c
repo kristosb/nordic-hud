@@ -12,6 +12,8 @@
 
 #include <zephyr/logging/log.h>
 
+//#include <app/drivers/sensor/bmi05x.h>
+
 #define TICK_PERIOD   (1000)
 
 #define LED0_NODE	DT_ALIAS(led0)
