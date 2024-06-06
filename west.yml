@@ -3,7 +3,7 @@
 
 manifest:
   self:
-    path: app
+    path: hud-nordic
 
   remotes:
     - name: zephyrproject-rtos
