@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          path: example-application
+          path: hud-nordic
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -27,11 +27,11 @@ jobs:
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: example-application
+          app-path: hud-nordic
           toolchains: arm-zephyr-eabi
 
       - name: Build firmware
-        working-directory: example-application
+        working-directory: hud-nordic
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then
@@ -40,7 +40,7 @@ jobs:
           west twister -T app -v --inline-logs --integration $EXTRA_TWISTER_FLAGS
 
       - name: Twister Tests
-        working-directory: example-application
+        working-directory: hud-nordic
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then
