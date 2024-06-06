@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Example Application'
+project = 'HUD Application'
 copyright = '2024, The Zephyr Community'
 author = 'The Zephyr Community'
 release = '1.0.0'
@@ -35,6 +35,6 @@ intersphinx_mapping = {'zephyr': ('https://docs.zephyrproject.org/latest/', None
 # WARNING: please, check breathe maintainership status before using this
 # extension in production!
 
-breathe_projects = {'example-application': '_build_doxygen/xml'}
-breathe_default_project = 'example-application'
+breathe_projects = {'hud-application': '_build_doxygen/xml'}
+breathe_default_project = 'hud-application'
 breathe_default_members = ('members', )

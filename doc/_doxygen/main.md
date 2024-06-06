@@ -1,5 +1,5 @@
 # Introduction
 
-This is the Doxygen documentation for [example-application].
+This is the Doxygen documentation for [hus-application].
 
-[example-application]: https://github.com/zephyrproject-rtos/example-application
+[hud-application]: https://github.com/kristosb/nordic-hud/
