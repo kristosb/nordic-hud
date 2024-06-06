@@ -8,6 +8,7 @@ common:
   build_only: true
   integration_platforms:
     - custom_plank
+    - mdbt42q_nrf52
 tests:
   app.default: {}
   app.debug:
