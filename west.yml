@@ -4,6 +4,7 @@
 manifest:
   self:
     path: hud-nordic
+    west-commands: scripts/west-commands.yml
 
   remotes:
     - name: zephyrproject-rtos

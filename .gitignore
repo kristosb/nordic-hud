@@ -7,6 +7,9 @@
 *.swp
 *.swo
 *~
+# build
+/build*
+/twister-out*
 build*/
 !doc/guides/build
 !tests/drivers/build_all
@@ -40,6 +43,8 @@ doc/doc.warnings
 .envrc
 .vscode
 hide-defaults-note
+
+__pycache__/
 
 # Tag files
 GPATH
