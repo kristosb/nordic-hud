@@ -4,6 +4,7 @@
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/gpio.h>
 //#include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
 
@@ -14,23 +15,48 @@
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
 #define BLINK_PERIOD_MS_STEP 100U
-#define BLINK_PERIOD_MS_MAX  1000U
+#define BLINK_PERIOD_MS_MAX  1300U
+
+#define TICK_PERIOD   (1000)
+
+#define LED0_NODE	DT_ALIAS(led0)
+static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+
+void display_timer_handler(struct k_timer * timer);
+void control_task_handler(struct k_work * work);
+
+K_TIMER_DEFINE(control_timer, display_timer_handler, NULL);
+K_WORK_DEFINE(control_work, control_task_handler);
+
+void display_timer_handler(struct k_timer * timer)
+{
+    k_work_submit(&control_work);
+}
+
+void control_task_handler(struct k_work * work)
+{  
+    gpio_pin_toggle_dt(&led);
+}
+
 
 int main(void)
 {
 	int ret;
 	unsigned int period_ms = BLINK_PERIOD_MS_MAX;
 	const struct device *blink;
-	//const struct device *sensor, *blink;
-	//struct sensor_value last_val = { 0 }, val;
 
 	printk("Zephyr Example Application %s\n", APP_VERSION_STRING);
 
-	// sensor = DEVICE_DT_GET(DT_NODELABEL(example_sensor));
-	// if (!device_is_ready(sensor)) {
-	// 	LOG_ERR("Sensor not ready");
-	// 	return 0;
-	// }
+    if (!device_is_ready(led.port)) {
+        return 0;
+	}
+
+	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0) {
+		return 0;
+	}
+
+	gpio_pin_toggle_dt(&led);
 
 	blink = DEVICE_DT_GET(DT_NODELABEL(blink_led));
 	if (!device_is_ready(blink)) {
@@ -46,35 +72,7 @@ int main(void)
 
 	//printk("Use the sensor to change LED blinking period\n");
 	blink_set_period_ms(blink, period_ms);
-	while (1) {
-		// ret = sensor_sample_fetch(sensor);
-		// if (ret < 0) {
-		// 	LOG_ERR("Could not fetch sample (%d)", ret);
-		// 	return 0;
-		// }
-
-		// ret = sensor_channel_get(sensor, SENSOR_CHAN_PROX, &val);
-		// if (ret < 0) {
-		// 	LOG_ERR("Could not get sample (%d)", ret);
-		// 	return 0;
-		// }
-
-		/*if ((last_val.val1 == 0) && (val.val1 == 1)) {
-			if (period_ms == 0U) {
-				period_ms = BLINK_PERIOD_MS_MAX;
-			} else {
-				period_ms -= BLINK_PERIOD_MS_STEP;
-			}
-
-			// printk("Proximity detected, setting LED period to %u ms\n",
-			//        period_ms);
-			blink_set_period_ms(blink, period_ms);
-		}*/
-
-		//last_val = val;
-
-		k_sleep(K_MSEC(100));
-	}
+	k_timer_start(&control_timer, K_MSEC(TICK_PERIOD), K_MSEC(TICK_PERIOD));
 
 	return 0;
 }
