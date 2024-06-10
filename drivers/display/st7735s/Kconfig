@@ -1,0 +1,14 @@
+# Display drivers
+
+# Copyright (c) 2017 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+# source "drivers/display/Kconfig.st7735s"
+
+config ST7735S
+	bool "ST7735S display driver"
+	default y
+	depends on DT_HAS_SITRONIX_ST7735S_ENABLED
+	select SPI
+	help
+	  Enable driver for ST7735S display driver.

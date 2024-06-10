@@ -1,4 +1,5 @@
-# Copyright (c) 2022 Nordic Semiconductor ASA
+# Copyright (c) 2021 Nordic Semiconductor ASA
 # SPDX-License-Identifier: Apache-2.0
 
-add_subdirectory_ifdef(CONFIG_BMI05x bmi05x)
+add_subdirectory_ifdef(CONFIG_EXAMPLE_SENSOR example_sensor)
+
