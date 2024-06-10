@@ -8,8 +8,11 @@ common:
   build_only: true
   integration_platforms:
     - mdbt42q_nrf52
+  # modules:
+  #   - lvgl
 tests:
   app.default: {}
   app.debug:
     extra_overlay_confs:
       - debug.conf
+

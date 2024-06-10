@@ -1,0 +1,194 @@
+/*
+ * Copyright (c) 2021 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* This devicetree overlay file will be automatically picked by the Zephyr
+ * build system when building the sample for the mdbt42q board. It shows
+ * how the example-application can be built on sample boards already provided
+ * by Zephyr.
+ */
+/*
+ / {
+	chosen {
+		zephyr,display = &st7735r_st7735r_ada_160x128;
+	};
+ };
+
+&spi0 {
+	cs-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+	clock-frequency = <DT_FREQ_M(3)>;
+	st7735r_st7735r_ada_160x128: st7735r@0 {
+		compatible = "sitronix,st7735r";
+		spi-max-frequency = <DT_FREQ_M(3)>;
+		cmd-data-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		reg = <0>;
+		width = <128>;
+		height = <128>;
+	};
+};
+*/
+//#include <zephyr/dt-bindings/mipi_dbi/mipi_dbi.h>
+/*
+/ {
+	chosen {
+		zephyr,display = &st7735r_st7735r_ada_160x128;
+	};
+};
+
+arduino_spi: &spi0 {
+	compatible = "nordic,nrf-spi";
+	//compatible = "nordic,nrf-spim";
+	status = "okay";
+	cs-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+	clock-frequency = <DT_FREQ_M(3)>;
+	st7735r_st7735r_ada_160x128: st7735r@0 {
+		compatible = "sitronix,st7735r";
+		status = "okay";
+		spi-max-frequency = <DT_FREQ_M(3)>;
+		reg = <0>;
+		cmd-data-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		width = <128>;
+		height = <128>;
+	};
+};
+*/
+// &arduino_spi {
+// 	status = "okay";
+// 	cs-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+// 	clock-frequency = <DT_FREQ_M(3)>;
+// };
+/*
+#include <zephyr/dt-bindings/mipi_dbi/mipi_dbi.h>
+
+{
+	chosen {
+		zephyr,display = &st7735r_st7735r_ada_160x128;
+	};
+
+	mipi_dbi {
+		compatible = "zephyr,mipi-dbi-spi";
+		reset-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+		dc-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		spi-dev = <&spi0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	
+		st7735r: st7735r@0 {
+			compatible = "sitronix,st7735r";
+			reg = <0>;
+			mipi-max-frequency = <DT_FREQ_M(3)>;
+			mipi-mode = <MIPI_DBI_MODE_SPI_4WIRE>;
+			width = <128>;
+			height = <128>;
+		};
+	};
+
+};
+
+arduino_spi: &spi0 {
+	compatible = "nordic,nrf-spi";
+
+	status = "okay";
+	clock-frequency = <DT_FREQ_M(3)>;
+	pinctrl-0 = <&spi0_default>;
+	pinctrl-1 = <&spi0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+*/
+/*
+#include <zephyr/dt-bindings/mipi_dbi/mipi_dbi.h>
+
+/ {
+	chosen {
+		zephyr,display = &st7735r_st7735r_ada_160x128;
+	};
+
+	mipi_dbi_st7735r_ada_160x128 {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&arduino_spi>;
+		dc-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		st7735r_st7735r_ada_160x128: st7735r@0 {
+			compatible = "sitronix,st7735r";
+			mipi-max-frequency = <3000000>;
+			mipi-mode = <MIPI_DBI_MODE_SPI_4WIRE>;
+			// cmd-data-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+			// reset-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+			reg = <0>;
+			width = <128>;
+			height = <128>;
+			x-offset = <0>;
+			y-offset = <0>;
+			madctl = <0x60>;
+			colmod = <0x55>;
+			vmctr1 = <0x0e>;
+			pwctr1 = [a2 02 84];
+			pwctr2 = [c5];
+			pwctr3 = [0a 00];
+			pwctr4 = [8a 2a];
+			pwctr5 = [8a ee];
+			frmctr1 = [01 2c 2d];
+			frmctr2 = [01 2c 2d];
+			frmctr3 = [01 2c 2d 01 2c 2d];
+			gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
+			gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
+		};
+	};
+};
+
+&arduino_spi {
+	status = "okay";
+	clock-frequency = <DT_FREQ_M(3)>;
+	cs-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+};*/
+
+/ {
+	chosen {
+		zephyr,display = &st7735s_st7735s_ada_160x128;
+	};
+ };
+
+ arduino_spi: &spi0 {
+	cs-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+	clock-frequency = <DT_FREQ_M(3)>;
+	st7735s_st7735s_ada_160x128: st7735s@0 {
+		compatible = "sitronix,st7735s";
+		spi-max-frequency = <DT_FREQ_M(3)>;
+		cmd-data-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		width = <128>;
+		height = <128>;
+		reg = <0>;
+		x-offset = <0>;
+		y-offset = <0>;
+		madctl = <0x60>;
+		colmod = <0x55>;
+		vmctr1 = <0x0e>;
+		pwctr1 = [a2 02 84];
+		pwctr2 = [c5];
+		pwctr3 = [0a 00];
+		pwctr4 = [8a 2a];
+		pwctr5 = [8a ee];
+		frmctr1 = [01 2c 2d];
+		frmctr2 = [01 2c 2d];
+		frmctr3 = [01 2c 2d 01 2c 2d];
+		gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
+		gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
+	};
+
+	/*blink-gpio-led {
+        compatible = "blink-gpio-led";
+        led-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+		blink-period-ms = <1000>;
+    };*/
+};
+
+&st7735s_st7735s_ada_160x128 {
+	spi-max-frequency = <DT_FREQ_M(3)>;
+};
