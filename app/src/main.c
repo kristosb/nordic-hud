@@ -83,7 +83,7 @@ void control_task_handler(struct k_work * work)
     if(screen0_label_value > 120) screen0_label_value = 0;
 	screen0_x_value +=1;
 	screen0_y_value -=1;
-
+	//printk("x = %d\n", screen0_x_value);
     numeric_param_update(screen_id, 0, screen0_label_value, "x: %d");
 	numeric_param_update(screen_id, 1, screen0_x_value, "y: %d");
 	numeric_param_update(screen_id, 2, screen0_y_value, "z: %d");
@@ -173,17 +173,17 @@ int main(void)
 	}
 
     if (display_dev == NULL) {
-        //LOG_ERR("Display device not found.");
+        LOG_ERR("Display device not found.");
         return -1;
     }
 
-
+	printk("Device initialization success\n");
     display_screens_init();
     lv_scr_load(screens[0].screen);
 
 	display_blanking_off(display_dev);
 
-	//printk("Use the sensor to change LED blinking period\n");
+	
 	blink_set_period_ms(blink, period_ms);
 	k_timer_start(&control_timer, K_MSEC(TICK_PERIOD), K_MSEC(TICK_PERIOD));
 
