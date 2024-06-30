@@ -15,9 +15,7 @@
 #include <string.h>
 #include <lvgl.h>
 
-//#include <app/drivers/sensor/bmi05x.h>
 #include <app/drivers/blink.h>
-
 
 #include <app_version.h>
 
@@ -208,7 +206,6 @@ int main(void)
     lv_scr_load(screens[0].screen);
 
 	display_blanking_off(display_dev);
-
 	
 	blink_set_period_ms(blink, period_ms);
 	k_timer_start(&control_timer, K_MSEC(TICK_PERIOD), K_MSEC(TICK_PERIOD));

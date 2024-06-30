@@ -14,11 +14,7 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/logging/log.h>
 
-//#include "bno055.h"
 #include <app/drivers/sensor/bno055.h>
-#include "bno055_config_file.h"
-
-//#include "bno055_bosh.h"
 
 LOG_MODULE_REGISTER(bno055, CONFIG_SENSOR_LOG_LEVEL);
 
@@ -75,29 +71,6 @@ int bno055_reg_write_with_delay(const struct device *dev,
 	return ret;
 }
 
-static void channel_accel_convert(struct sensor_value *val, int64_t raw_val,
-				  uint8_t range)
-{
-	/* 16 bit accelerometer. 2^15 bits represent the range in G */
-	/* Converting from G to m/s^2 */
-	raw_val = (raw_val * SENSOR_G * (int64_t) range) / INT16_MAX;
-
-	val->val1 = raw_val / 1000000LL;
-	val->val2 = raw_val % 1000000LL;
-}
-
-static void channel_gyro_convert(struct sensor_value *val, int64_t raw_val,
-				 uint16_t range)
-{
-	/* 16 bit gyroscope. 2^15 bits represent the range in degrees/s */
-	/* Converting from degrees/s to radians/s */
-
-	val->val1 = ((raw_val * (int64_t) range * SENSOR_PI)
-		     / (180LL * INT16_MAX)) / 1000000LL;
-	val->val2 = ((raw_val * (int64_t) range * SENSOR_PI)
-		     / (180LL * INT16_MAX)) % 1000000LL;
-}
-
 static void channel_euler_convert(struct sensor_value *val, int64_t raw_val,
 				 uint16_t range)
 {
@@ -105,455 +78,15 @@ static void channel_euler_convert(struct sensor_value *val, int64_t raw_val,
 	val->val2 = (int32_t)(raw_val * 100 / (int64_t) BNO055_EULER_DIV_DEG) % 100LL;
 }
 
-static uint8_t acc_odr_to_reg(const struct sensor_value *val)
-{
-	double odr = sensor_value_to_double((struct sensor_value *) val);
-	uint8_t reg = 0;
-
-	if ((odr >= 0.78125) && (odr < 1.5625)) {
-		reg = BNO055_ACC_ODR_25D32_HZ;
-	} else if ((odr >= 1.5625) && (odr < 3.125)) {
-		reg = BNO055_ACC_ODR_25D16_HZ;
-	} else if ((odr >= 3.125) && (odr < 6.25)) {
-		reg = BNO055_ACC_ODR_25D8_HZ;
-	} else if ((odr >= 6.25) && (odr < 12.5)) {
-		reg = BNO055_ACC_ODR_25D4_HZ;
-	} else if ((odr >= 12.5) && (odr < 25.0)) {
-		reg = BNO055_ACC_ODR_25D2_HZ;
-	} else if ((odr >= 25.0) && (odr < 50.0)) {
-		reg = BNO055_ACC_ODR_25_HZ;
-	} else if ((odr >= 50.0) && (odr < 100.0)) {
-		reg = BNO055_ACC_ODR_50_HZ;
-	} else if ((odr >= 100.0) && (odr < 200.0)) {
-		reg = BNO055_ACC_ODR_100_HZ;
-	} else if ((odr >= 200.0) && (odr < 400.0)) {
-		reg = BNO055_ACC_ODR_200_HZ;
-	} else if ((odr >= 400.0) && (odr < 800.0)) {
-		reg = BNO055_ACC_ODR_400_HZ;
-	} else if ((odr >= 800.0) && (odr < 1600.0)) {
-		reg = BNO055_ACC_ODR_800_HZ;
-	} else if (odr >= 1600.0) {
-		reg = BNO055_ACC_ODR_1600_HZ;
-	}
-	return reg;
-}
-
-static int set_accel_odr_osr(const struct device *dev, const struct sensor_value *odr,
-			     const struct sensor_value *osr)
-{
-	struct bno055_data *data = dev->data;
-	uint8_t acc_conf, odr_bits, pwr_ctrl, osr_bits;
-	int ret = 0;
-
-	if (odr || osr) {
-		ret = bno055_reg_read(dev, BNO055_REG_ACC_CONF, &acc_conf, 1);
-		if (ret != 0) {
-			return ret;
-		}
-
-		ret = bno055_reg_read(dev, BNO055_REG_PWR_CTRL, &pwr_ctrl, 1);
-		if (ret != 0) {
-			return ret;
-		}
-	}
-
-	if (odr) {
-		odr_bits = acc_odr_to_reg(odr);
-		acc_conf = BNO055_SET_BITS_POS_0(acc_conf, BNO055_ACC_ODR,
-						 odr_bits);
-
-		/* If odr_bits is 0, implies that the sampling frequency is 0Hz
-		 * or invalid too.
-		 */
-		if (odr_bits) {
-			pwr_ctrl |= BNO055_PWR_CTRL_ACC_EN;
-		} else {
-			pwr_ctrl &= ~BNO055_PWR_CTRL_ACC_EN;
-		}
-
-		/* If the Sampling frequency (odr) >= 100Hz, enter performance
-		 * mode else, power optimized. This also has a consequence
-		 * for the OSR
-		 */
-		if (odr_bits >= BNO055_ACC_ODR_100_HZ) {
-			acc_conf = BNO055_SET_BITS(acc_conf, BNO055_ACC_FILT,
-						   BNO055_ACC_FILT_PERF_OPT);
-		} else {
-			acc_conf = BNO055_SET_BITS(acc_conf, BNO055_ACC_FILT,
-						   BNO055_ACC_FILT_PWR_OPT);
-		}
-
-		data->acc_odr = odr_bits;
-	}
-
-	if (osr) {
-		if (data->acc_odr >= BNO055_ACC_ODR_100_HZ) {
-			/* Performance mode */
-			/* osr->val2 should be unused */
-			switch (osr->val1) {
-			case 4:
-				osr_bits = BNO055_ACC_BWP_OSR4_AVG1;
-				break;
-			case 2:
-				osr_bits = BNO055_ACC_BWP_OSR2_AVG2;
-				break;
-			case 1:
-				osr_bits = BNO055_ACC_BWP_NORM_AVG4;
-				break;
-			default:
-				osr_bits = BNO055_ACC_BWP_CIC_AVG8;
-				break;
-			}
-		} else {
-			/* Power optimized mode */
-			/* osr->val2 should be unused */
-			switch (osr->val1) {
-			case 1:
-				osr_bits = BNO055_ACC_BWP_OSR4_AVG1;
-				break;
-			case 2:
-				osr_bits = BNO055_ACC_BWP_OSR2_AVG2;
-				break;
-			case 4:
-				osr_bits = BNO055_ACC_BWP_NORM_AVG4;
-				break;
-			case 8:
-				osr_bits = BNO055_ACC_BWP_CIC_AVG8;
-				break;
-			case 16:
-				osr_bits = BNO055_ACC_BWP_RES_AVG16;
-				break;
-			case 32:
-				osr_bits = BNO055_ACC_BWP_RES_AVG32;
-				break;
-			case 64:
-				osr_bits = BNO055_ACC_BWP_RES_AVG64;
-				break;
-			case 128:
-				osr_bits = BNO055_ACC_BWP_RES_AVG128;
-				break;
-			default:
-				return -ENOTSUP;
-			}
-		}
-
-		acc_conf = BNO055_SET_BITS(acc_conf, BNO055_ACC_BWP,
-					   osr_bits);
-	}
-
-	if (odr || osr) {
-		ret = bno055_reg_write(dev, BNO055_REG_ACC_CONF, &acc_conf, 1);
-		if (ret != 0) {
-			return ret;
-		}
-
-		/* Assuming we have advance power save enabled */
-		k_usleep(BNO055_TRANSC_DELAY_SUSPEND);
-
-		pwr_ctrl &= BNO055_PWR_CTRL_MSK;
-		ret = bno055_reg_write_with_delay(dev, BNO055_REG_PWR_CTRL,
-						  &pwr_ctrl, 1,
-						  BNO055_INTER_WRITE_DELAY_US);
-	}
-
-	return ret;
-}
-
-static int set_accel_range(const struct device *dev, const struct sensor_value *range)
-{
-	struct bno055_data *data = dev->data;
-	int ret = 0;
-	uint8_t acc_range, reg;
-
-	ret = bno055_reg_read(dev, BNO055_REG_ACC_RANGE, &acc_range, 1);
-	if (ret != 0) {
-		return ret;
-	}
-
-	/* range->val2 is unused */
-	switch (range->val1) {
-	case 2:
-		reg = BNO055_ACC_RANGE_2G;
-		data->acc_range = 2;
-		break;
-	case 4:
-		reg = BNO055_ACC_RANGE_4G;
-		data->acc_range = 4;
-		break;
-	case 8:
-		reg = BNO055_ACC_RANGE_8G;
-		data->acc_range = 8;
-		break;
-	case 16:
-		reg = BNO055_ACC_RANGE_16G;
-		data->acc_range = 16;
-		break;
-	default:
-		return -ENOTSUP;
-	}
-
-	acc_range = BNO055_SET_BITS_POS_0(acc_range, BNO055_ACC_RANGE,
-					  reg);
-	ret = bno055_reg_write_with_delay(dev, BNO055_REG_ACC_RANGE, &acc_range,
-					  1, BNO055_INTER_WRITE_DELAY_US);
-
-	return ret;
-}
-
-static uint8_t gyr_odr_to_reg(const struct sensor_value *val)
-{
-	double odr = sensor_value_to_double((struct sensor_value *) val);
-	uint8_t reg = 0;
-
-	if ((odr >= 25.0) && (odr < 50.0)) {
-		reg = BNO055_GYR_ODR_25_HZ;
-	} else if ((odr >= 50.0) && (odr < 100.0)) {
-		reg = BNO055_GYR_ODR_50_HZ;
-	} else if ((odr >= 100.0) && (odr < 200.0)) {
-		reg = BNO055_GYR_ODR_100_HZ;
-	} else if ((odr >= 200.0) && (odr < 400.0)) {
-		reg = BNO055_GYR_ODR_200_HZ;
-	} else if ((odr >= 400.0) && (odr < 800.0)) {
-		reg = BNO055_GYR_ODR_400_HZ;
-	} else if ((odr >= 800.0) && (odr < 1600.0)) {
-		reg = BNO055_GYR_ODR_800_HZ;
-	} else if ((odr >= 1600.0) && (odr < 3200.0)) {
-		reg = BNO055_GYR_ODR_1600_HZ;
-	} else if (odr >= 3200.0) {
-		reg = BNO055_GYR_ODR_3200_HZ;
-	}
-
-	return reg;
-}
-
-static int set_gyro_odr_osr(const struct device *dev, const struct sensor_value *odr,
-			    const struct sensor_value *osr)
-{
-	struct bno055_data *data = dev->data;
-	uint8_t gyr_conf, odr_bits, pwr_ctrl, osr_bits;
-	int ret = 0;
-
-	if (odr || osr) {
-		ret = bno055_reg_read(dev, BNO055_REG_GYR_CONF, &gyr_conf, 1);
-		if (ret != 0) {
-			return ret;
-		}
-
-		ret = bno055_reg_read(dev, BNO055_REG_PWR_CTRL, &pwr_ctrl, 1);
-		if (ret != 0) {
-			return ret;
-		}
-	}
-
-	if (odr) {
-		odr_bits = gyr_odr_to_reg(odr);
-		gyr_conf = BNO055_SET_BITS_POS_0(gyr_conf, BNO055_GYR_ODR,
-						 odr_bits);
-
-		/* If odr_bits is 0, implies that the sampling frequency is
-		 * 0Hz or invalid too.
-		 */
-		if (odr_bits) {
-			pwr_ctrl |= BNO055_PWR_CTRL_GYR_EN;
-		} else {
-			pwr_ctrl &= ~BNO055_PWR_CTRL_GYR_EN;
-		}
-
-		/* If the Sampling frequency (odr) >= 100Hz, enter performance
-		 * mode else, power optimized. This also has a consequence for
-		 * the OSR
-		 */
-		if (odr_bits >= BNO055_GYR_ODR_100_HZ) {
-			gyr_conf = BNO055_SET_BITS(gyr_conf,
-						   BNO055_GYR_FILT,
-						   BNO055_GYR_FILT_PERF_OPT);
-			gyr_conf = BNO055_SET_BITS(gyr_conf,
-						   BNO055_GYR_FILT_NOISE,
-						   BNO055_GYR_FILT_NOISE_PERF);
-		} else {
-			gyr_conf = BNO055_SET_BITS(gyr_conf,
-						   BNO055_GYR_FILT,
-						   BNO055_GYR_FILT_PWR_OPT);
-			gyr_conf = BNO055_SET_BITS(gyr_conf,
-						   BNO055_GYR_FILT_NOISE,
-						   BNO055_GYR_FILT_NOISE_PWR);
-		}
-
-		data->gyr_odr = odr_bits;
-	}
-
-	if (osr) {
-		/* osr->val2 should be unused */
-		switch (osr->val1) {
-		case 4:
-			osr_bits = BNO055_GYR_BWP_OSR4;
-			break;
-		case 2:
-			osr_bits = BNO055_GYR_BWP_OSR2;
-			break;
-		default:
-			osr_bits = BNO055_GYR_BWP_NORM;
-			break;
-		}
-
-		gyr_conf = BNO055_SET_BITS(gyr_conf, BNO055_GYR_BWP,
-					   osr_bits);
-	}
-
-	if (odr || osr) {
-		ret = bno055_reg_write(dev, BNO055_REG_GYR_CONF, &gyr_conf, 1);
-		if (ret != 0) {
-			return ret;
-		}
-
-		/* Assuming we have advance power save enabled */
-		k_usleep(BNO055_TRANSC_DELAY_SUSPEND);
-
-		pwr_ctrl &= BNO055_PWR_CTRL_MSK;
-		ret = bno055_reg_write_with_delay(dev, BNO055_REG_PWR_CTRL,
-						  &pwr_ctrl, 1,
-						  BNO055_INTER_WRITE_DELAY_US);
-	}
-
-	return ret;
-}
-
-static int set_gyro_range(const struct device *dev, const struct sensor_value *range)
-{
-	struct bno055_data *data = dev->data;
-	int ret = 0;
-	uint8_t gyr_range, reg;
-
-	ret = bno055_reg_read(dev, BNO055_REG_GYR_RANGE, &gyr_range, 1);
-	if (ret != 0) {
-		return ret;
-	}
-
-	/* range->val2 is unused */
-	switch (range->val1) {
-	case 125:
-		reg = BNO055_GYR_RANGE_125DPS;
-		data->gyr_range = 125;
-		break;
-	case 250:
-		reg = BNO055_GYR_RANGE_250DPS;
-		data->gyr_range = 250;
-		break;
-	case 500:
-		reg = BNO055_GYR_RANGE_500DPS;
-		data->gyr_range = 500;
-		break;
-	case 1000:
-		reg = BNO055_GYR_RANGE_1000DPS;
-		data->gyr_range = 1000;
-		break;
-	case 2000:
-		reg = BNO055_GYR_RANGE_2000DPS;
-		data->gyr_range = 2000;
-		break;
-	default:
-		return -ENOTSUP;
-	}
-
-	gyr_range = BNO055_SET_BITS_POS_0(gyr_range, BNO055_GYR_RANGE, reg);
-	ret = bno055_reg_write_with_delay(dev, BNO055_REG_GYR_RANGE, &gyr_range,
-					  1, BNO055_INTER_WRITE_DELAY_US);
-
-	return ret;
-}
-
-static int8_t write_config_file(const struct device *dev)
-{
-	const struct bno055_config *cfg = dev->config;
-	int8_t ret = 0;
-	uint16_t index = 0;
-	uint8_t addr_array[2] = { 0 };
-
-	LOG_DBG("writing config file %s", cfg->feature->name);
-
-	/* Disable loading of the configuration */
-	for (index = 0; index < cfg->feature->config_file_len;
-	     index += BNO055_WR_LEN) {
-		/* Store 0 to 3 bits of address in first byte */
-		addr_array[0] = (uint8_t)((index / 2) & 0x0F);
-
-		/* Store 4 to 11 bits of address in the second byte */
-		addr_array[1] = (uint8_t)((index / 2) >> 4);
-
-		ret = bno055_reg_write_with_delay(dev, BNO055_REG_INIT_ADDR_0,
-						  addr_array, 2,
-						  BNO055_INTER_WRITE_DELAY_US);
-
-		if (ret == 0) {
-			ret = bno055_reg_write_with_delay(dev,
-						BNO055_REG_INIT_DATA,
-						&cfg->feature->config_file[index],
-						BNO055_WR_LEN,
-						BNO055_INTER_WRITE_DELAY_US);
-		}
-	}
-
-	return ret;
-}
-
-/*static int bno055_sample_fetch(const struct device *dev, enum sensor_channel chan)
-{
-	struct bno055_data *data = dev->data;
-	uint8_t buf[12];
-	int ret;
-
-	if (chan != SENSOR_CHAN_ALL) {
-		return -ENOTSUP;
-	}
-
-	ret = bno055_reg_read(dev, BNO055_REG_ACC_X_LSB, buf, 12);
-	if (ret == 0) {
-		data->ax = (int16_t)sys_get_le16(&buf[0]);
-		data->ay = (int16_t)sys_get_le16(&buf[2]);
-		data->az = (int16_t)sys_get_le16(&buf[4]);
-		data->gx = (int16_t)sys_get_le16(&buf[6]);
-		data->gy = (int16_t)sys_get_le16(&buf[8]);
-		data->gz = (int16_t)sys_get_le16(&buf[10]);
-	} else {
-		data->ax = 0;
-		data->ay = 0;
-		data->az = 0;
-		data->gx = 0;
-		data->gy = 0;
-		data->gz = 0;
-	}
-
-	return ret;
-}*/
-
 static int bno055_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
-	//struct bno055_data *data = dev->data;
-	//uint8_t buf[12];
 	int ret;
 
 	struct bno055_euler_t *euler = dev->data;
 	/*if (chan != SENSOR_CHAN_ALL) {
 		return -ENOTSUP;
 	}
-
-	ret = bno055_reg_read(dev, BNO055_REG_ACC_X_LSB, buf, 12);
-	if (ret == 0) {
-		data->ax = (int16_t)sys_get_le16(&buf[0]);
-		data->ay = (int16_t)sys_get_le16(&buf[2]);
-		data->az = (int16_t)sys_get_le16(&buf[4]);
-		data->gx = (int16_t)sys_get_le16(&buf[6]);
-		data->gy = (int16_t)sys_get_le16(&buf[8]);
-		data->gz = (int16_t)sys_get_le16(&buf[10]);
-	} else {
-		data->ax = 0;
-		data->ay = 0;
-		data->az = 0;
-		data->gx = 0;
-		data->gy = 0;
-		data->gz = 0;
 	}*/
-/////////////////////////////////////////////
     uint8_t data_u8[BNO055_EULER_HRP_DATA_SIZE] = {
         BNO055_INIT_VALUE, BNO055_INIT_VALUE, BNO055_INIT_VALUE, BNO055_INIT_VALUE, BNO055_INIT_VALUE, BNO055_INIT_VALUE
     };
@@ -592,19 +125,11 @@ static int bno055_sample_fetch(const struct device *dev, enum sensor_channel cha
 		euler->p =
 			(int16_t)((((int32_t)((int8_t)data_u8[BNO055_SENSOR_DATA_EULER_HRP_P_MSB])) << BNO055_SHIFT_EIGHT_BITS) |
 					(data_u8[BNO055_SENSOR_DATA_EULER_HRP_P_LSB]));
-		
-		// euler->h = euler->h / BNO055_EULER_DIV_DEG;
-		// euler->r = euler->r / BNO055_EULER_DIV_DEG;
-		// euler->p = euler->p / BNO055_EULER_DIV_DEG;
-
 	} else {
 		euler->h = 0;
 		euler->r = 0;
 		euler->p = 0;
 	}
-
-
-///////////////////
 	return ret;
 }
 
@@ -614,33 +139,7 @@ static int bno055_channel_get(const struct device *dev, enum sensor_channel chan
 	struct bno055_data *data = dev->data;
 	struct bno055_euler_t *euler = dev->data;
 
-	if (chan == SENSOR_CHAN_ACCEL_X) {
-		channel_accel_convert(val, data->ax, data->acc_range);
-	} else if (chan == SENSOR_CHAN_ACCEL_Y) {
-		channel_accel_convert(val, data->ay, data->acc_range);
-	} else if (chan == SENSOR_CHAN_ACCEL_Z) {
-		channel_accel_convert(val, data->az, data->acc_range);
-	} else if (chan == SENSOR_CHAN_ACCEL_XYZ) {
-		channel_accel_convert(&val[0], data->ax,
-				      data->acc_range);
-		channel_accel_convert(&val[1], data->ay,
-				      data->acc_range);
-		channel_accel_convert(&val[2], data->az,
-				      data->acc_range);
-	} else if (chan == SENSOR_CHAN_GYRO_X) {
-		channel_gyro_convert(val, data->gx, data->gyr_range);
-	} else if (chan == SENSOR_CHAN_GYRO_Y) {
-		channel_gyro_convert(val, data->gy, data->gyr_range);
-	} else if (chan == SENSOR_CHAN_GYRO_Z) {
-		channel_gyro_convert(val, data->gz, data->gyr_range);
-	} else if (chan == SENSOR_CHAN_GYRO_XYZ) {
-		// channel_gyro_convert(&val[0], data->gx,
-		// 		     data->gyr_range);
-		// channel_gyro_convert(&val[1], data->gy,
-		// 		     data->gyr_range);
-		// channel_gyro_convert(&val[2], data->gz,
-		// 		     data->gyr_range);
-
+	if (chan == SENSOR_CHAN_GYRO_XYZ) {
 		channel_euler_convert(&val[0], euler->h, data->gyr_range);
 		channel_euler_convert(&val[1], euler->r, data->gyr_range);
 		channel_euler_convert(&val[2], euler->p, data->gyr_range);
@@ -704,15 +203,15 @@ static int bno055_attr_set(const struct device *dev, enum sensor_channel chan,
 	    || (chan == SENSOR_CHAN_ACCEL_Z)
 	    || (chan == SENSOR_CHAN_ACCEL_XYZ)) {
 		switch (attr) {
-		case SENSOR_ATTR_SAMPLING_FREQUENCY:
-			ret = set_accel_odr_osr(dev, val, NULL);
-			break;
-		case SENSOR_ATTR_OVERSAMPLING:
-			ret = set_accel_odr_osr(dev, NULL, val);
-			break;
-		case SENSOR_ATTR_FULL_SCALE:
-			ret = set_accel_range(dev, val);
-			break;
+		// case SENSOR_ATTR_SAMPLING_FREQUENCY:
+		// 	ret = set_accel_odr_osr(dev, val, NULL);
+		// 	break;
+		// case SENSOR_ATTR_OVERSAMPLING:
+		// 	ret = set_accel_odr_osr(dev, NULL, val);
+		// 	break;
+		// case SENSOR_ATTR_FULL_SCALE:
+		// 	ret = set_accel_range(dev, val);
+		// 	break;
 #if defined(CONFIG_BNO055_TRIGGER)
 		case SENSOR_ATTR_SLOPE_DUR:
 			return bno055_write_anymo_duration(dev, val->val1);
@@ -726,15 +225,15 @@ static int bno055_attr_set(const struct device *dev, enum sensor_channel chan,
 		   || (chan == SENSOR_CHAN_GYRO_Z)
 		   || (chan == SENSOR_CHAN_GYRO_XYZ)) {
 		switch (attr) {
-		case SENSOR_ATTR_SAMPLING_FREQUENCY:
-			ret = set_gyro_odr_osr(dev, val, NULL);
-			break;
-		case SENSOR_ATTR_OVERSAMPLING:
-			ret = set_gyro_odr_osr(dev, NULL, val);
-			break;
-		case SENSOR_ATTR_FULL_SCALE:
-			ret = set_gyro_range(dev, val);
-			break;
+		// case SENSOR_ATTR_SAMPLING_FREQUENCY:
+		// 	ret = set_gyro_odr_osr(dev, val, NULL);
+		// 	break;
+		// case SENSOR_ATTR_OVERSAMPLING:
+		// 	ret = set_gyro_odr_osr(dev, NULL, val);
+		// 	break;
+		// case SENSOR_ATTR_FULL_SCALE:
+		// 	ret = set_gyro_range(dev, val);
+		// 	break;
 		default:
 			ret = -ENOTSUP;
 		}
@@ -746,152 +245,7 @@ static int bno055_attr_set(const struct device *dev, enum sensor_channel chan,
 static int bno055_init(const struct device *dev)
 {
 	int ret;
-	/*struct bno055_data *data = dev->data;
-	uint8_t chip_id;
-	uint8_t soft_reset_cmd;
-	uint8_t init_ctrl;
-	uint8_t msg;
-	uint8_t tries;
-	uint8_t adv_pwr_save;
-	uint8_t page_id_addr;
-
-	ret = bno055_bus_check(dev);
-	if (ret < 0) {
-		LOG_ERR("Could not initialize bus");
-		return ret;
-	}
-
-#if CONFIG_BNO055_TRIGGER
-	data->dev = dev;
-	k_mutex_init(&data->trigger_mutex);
-#endif
-
-	data->acc_odr = BNO055_ACC_ODR_100_HZ;
-	data->acc_range = 8;
-	data->gyr_odr = BNO055_GYR_ODR_200_HZ;
-	data->gyr_range = 2000;
-
-	k_usleep(BNO055_POWER_ON_TIME);
-
-	ret = bno055_bus_init(dev);
-	if (ret != 0) {
-		LOG_ERR("Could not initiate bus communication");
-		return ret;
-	}
-
-	ret = bno055_reg_read(dev, BNO055_REG_CHIP_ID, &chip_id, 1);
-	if (ret != 0) {
-		return ret;
-	}
-
-	if (chip_id != BNO055_CHIP_ID) {
-		LOG_ERR("Unexpected chip id (%x). Expected (%x)",
-			chip_id, BNO055_CHIP_ID);
-		return -EIO;
-	}
-
-	soft_reset_cmd = BNO055_CMD_SOFT_RESET;
-	ret = bno055_reg_write(dev, BNO055_SYS_TRIGGER, &soft_reset_cmd, 1);
-	if (ret != 0) {
-		LOG_ERR("Could not reset");
-		return ret;
-	}
-
-	k_usleep(BNO055_SOFT_RESET_TIME);
-
-
-	adv_pwr_save = BNO055_SET_BITS_POS_0(adv_pwr_save,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE_DIS);
-	ret = bno055_reg_write_with_delay(dev, BNO055_REG_PWR_MODE,
-					  &adv_pwr_save, 1,
-					  BNO055_INTER_WRITE_DELAY_US);
-	if (ret != 0) {
-		LOG_ERR("Could not set the power mode");
-		return ret;
-	}
-
-	ret = bno055_reg_read(dev, BNO055_REG_PWR_MODE, &adv_pwr_save, 1);
-	if (ret != 0) {
-		LOG_ERR("Could not read power mode %d", adv_pwr_save, BNO055_CHIP_ID);
-		return ret;
-	}
-	LOG_INF("Current power mode is %d", adv_pwr_save, BNO055_CHIP_ID);
-
-	page_id_addr = BNO055_PAGE_ZERO;
-	ret = bno055_reg_write(dev, BNO055_PAGE_ID_ADDR, &page_id_addr, 1);
-	if (ret != 0) {
-		LOG_ERR("Could not set the page id");
-		return ret;
-	}*/
-
-	/*adv_pwr_save = BNO055_SET_BITS_POS_0(adv_pwr_save,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE_DIS);
-	ret = bno055_reg_write_with_delay(dev, BNO055_REG_PWR_CONF,
-					  &adv_pwr_save, 1,
-					  BNO055_INTER_WRITE_DELAY_US);
-	if (ret != 0) {
-		return ret;
-	}
-
-	init_ctrl = BNO055_PREPARE_CONFIG_LOAD;
-	ret = bno055_reg_write(dev, BNO055_REG_INIT_CTRL, &init_ctrl, 1);
-	if (ret != 0) {
-		return ret;
-	}
-
-	ret = write_config_file(dev);
-
-	if (ret != 0) {
-		return ret;
-	}
-
-	init_ctrl = BNO055_COMPLETE_CONFIG_LOAD;
-	ret = bno055_reg_write(dev, BNO055_REG_INIT_CTRL, &init_ctrl, 1);
-	if (ret != 0) {
-		return ret;
-	}*/
-
-	/* Timeout after BNO055_CONFIG_FILE_RETRIES x
-	 * BNO055_CONFIG_FILE_POLL_PERIOD_US microseconds.
-	 * If tries is BNO055_CONFIG_FILE_RETRIES by the end of the loop,
-	 * report an error
-	 */
-	/*for (tries = 0; tries <= BNO055_CONFIG_FILE_RETRIES; tries++) {
-		ret = bno055_reg_read(dev, BNO055_REG_INTERNAL_STATUS, &msg, 1);
-		if (ret != 0) {
-			return ret;
-		}
-
-		msg &= BNO055_INST_MESSAGE_MSK;
-		if (msg == BNO055_INST_MESSAGE_INIT_OK) {
-			break;
-		}
-
-		k_usleep(BNO055_CONFIG_FILE_POLL_PERIOD_US);
-	}
-
-	if (tries == BNO055_CONFIG_FILE_RETRIES) {
-		return -EIO;
-	}*/
-/*
-#if CONFIG_BNO055_TRIGGER
-	ret = bno055_init_interrupts(dev);
-	if (ret) {
-		LOG_ERR("bno055_init_interrupts returned %d", ret);
-		return ret;
-	}
-#endif*/
-
-	/*adv_pwr_save = BNO055_SET_BITS_POS_0(adv_pwr_save,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE,
-					     BNO055_PWR_CONF_ADV_PWR_SAVE_EN);
-	ret = bno055_reg_write_with_delay(dev, BNO055_REG_PWR_CONF,
-					  &adv_pwr_save, 1,
-					  BNO055_INTER_WRITE_DELAY_US);
-*/
-
+	
 	uint8_t chip_id;
 	uint8_t bno055_page_zero_u8 = BNO055_PAGE_ZERO;
 	uint8_t data_u8 = BNO055_INIT_VALUE;
@@ -999,25 +353,6 @@ static const struct sensor_driver_api bno055_driver_api = {
 #endif
 };
 
-static const struct bno055_feature_config bno055_feature_max_fifo = {
-	.name = "max_fifo",
-	.config_file = bno055_config_file_max_fifo,
-	.config_file_len = sizeof(bno055_config_file_max_fifo),
-};
-
-static const struct bno055_feature_config bno055_feature_base = {
-	.name = "base",
-	.config_file = bno055_config_file_base,
-	.config_file_len = sizeof(bno055_config_file_base),
-	.anymo_1 = &(struct bno055_feature_reg){ .page = 1, .addr = 0x3C },
-	.anymo_2 = &(struct bno055_feature_reg){ .page = 1, .addr = 0x3E },
-};
-
-#define BNO055_FEATURE(inst) (						\
-	DT_INST_NODE_HAS_COMPAT(inst, bosch_bno055_base) ?	        \
-		&bno055_feature_base :					\
-		&bno055_feature_max_fifo)
-
 #if CONFIG_BNO055_TRIGGER
 #define BNO055_CONFIG_INT(inst) \
 	.int1 = GPIO_DT_SPEC_INST_GET_BY_IDX_OR(inst, irq_gpios, 0, {}),\
@@ -1045,7 +380,6 @@ static const struct bno055_feature_config bno055_feature_base = {
 		COND_CODE_1(DT_INST_ON_BUS(inst, spi),			\
 			    (BNO055_CONFIG_SPI(inst)),			\
 			    (BNO055_CONFIG_I2C(inst)))			\
-		.feature = BNO055_FEATURE(inst),			\
 		BNO055_CONFIG_INT(inst)					\
 	};								\
 									\

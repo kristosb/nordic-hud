@@ -213,9 +213,6 @@ struct bno055_t
     uint8_t gyro_rev_id; /**< gyro revision id of bno055 */
     uint8_t bl_rev_id; /**< boot loader revision id of bno055 */
     uint8_t dev_addr; /**< i2c device address of bno055 */
-    //BNO055_WR_FUNC_PTR; /**< bus write function pointer */
-    //BNO055_RD_FUNC_PTR; /**<bus read function pointer */
-    //void (*delay_msec)(BNO055_MDELAY_DATA_TYPE); /**< delay function pointer */
 };
 
 //////////////////BNO055//////////////////////////

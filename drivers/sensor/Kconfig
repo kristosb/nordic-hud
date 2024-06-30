@@ -3,6 +3,5 @@
 
 if SENSOR
 rsource "example_sensor/Kconfig"
-rsource "bmi05x/Kconfig"
 rsource "bno055/Kconfig"
 endif # SENSOR
