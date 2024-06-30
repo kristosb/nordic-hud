@@ -70,6 +70,14 @@
 
 };
 
+arduino_i2c: &i2c1 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	pinctrl-0 = <&i2c1_default>;
+	pinctrl-1 = <&i2c1_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
 arduino_spi: &spi0 {
 	compatible = "nordic,nrf-spi";
 	/* Cannot be used together with i2c0. */

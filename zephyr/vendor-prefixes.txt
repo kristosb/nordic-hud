@@ -1,1 +1,2 @@
-sitronix
+sitronix	Sitronix Technology Corporation
+bosch	Bosch Sensortec GmbH

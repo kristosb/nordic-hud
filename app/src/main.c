@@ -7,7 +7,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
-//#include <zephyr/drivers/sensor.h>
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/display.h>
 #include <zephyr/logging/log.h>
 
@@ -15,21 +15,26 @@
 #include <string.h>
 #include <lvgl.h>
 
-
 #include <app/drivers/blink.h>
 
 #include <app_version.h>
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
+#define SLEEP_TIME_MS   10*60*1000
 #define BLINK_PERIOD_MS_STEP 100U
 #define BLINK_PERIOD_MS_MAX  1300U
 
-#define TICK_PERIOD   (1000)
+#define TICK_PERIOD   (300)
 
 #define LED0_NODE	DT_ALIAS(led0)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+//const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bmi055_g));
+const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bno055_l));
+//const struct device *const gyro_dev = DEVICE_DT_GET_ONE(bosch_bno055);
+
+struct sensor_value gyr[3];
 
 typedef struct {
     lv_obj_t     ** object; 
@@ -79,14 +84,26 @@ void control_task_handler(struct k_work * work)
 
     gpio_pin_toggle_dt(&led);
 
-    screen0_label_value += 5;
-    if(screen0_label_value > 120) screen0_label_value = 0;
-	screen0_x_value +=1;
-	screen0_y_value -=1;
+	sensor_sample_fetch(gyro_dev);
+	sensor_channel_get(gyro_dev, SENSOR_CHAN_GYRO_XYZ, gyr);
 
-    numeric_param_update(screen_id, 0, screen0_label_value, "x: %d");
-	numeric_param_update(screen_id, 1, screen0_x_value, "y: %d");
-	numeric_param_update(screen_id, 2, screen0_y_value, "z: %d");
+	// printk("GX: %d; GY: %d; GZ: %d;\n",
+	// 		gyr[0].val1,
+	// 		gyr[1].val1,
+	// 		gyr[2].val1);
+
+
+    // screen0_label_value += 5;
+    // if(screen0_label_value > 120) screen0_label_value = 0;
+	// screen0_x_value +=1;
+	// screen0_y_value -=1;
+	//printk("x = %d\n", screen0_x_value);
+	screen0_label_value = gyr[0].val1;
+	screen0_x_value = gyr[1].val1;
+	screen0_y_value = gyr[2].val1;
+    numeric_param_update(screen_id, 0, screen0_label_value, "h: %d");
+	numeric_param_update(screen_id, 1, screen0_x_value, "p: %d");
+	numeric_param_update(screen_id, 2, screen0_y_value, "r: %d");
 
 	lv_task_handler();
 }
@@ -148,6 +165,7 @@ int main(void)
 	unsigned int period_ms = BLINK_PERIOD_MS_MAX;
 	const struct device *blink;
 
+
 	printk("Zephyr Example Application %s\n", APP_VERSION_STRING);
 
     if (!device_is_ready(led.port)) {
@@ -173,21 +191,35 @@ int main(void)
 	}
 
     if (display_dev == NULL) {
-        //LOG_ERR("Display device not found.");
+        LOG_ERR("Display device not found.");
         return -1;
     }
+	//LOG_ERR("Error test");
+	//LOG_INF("inf test");
+	if (!device_is_ready(gyro_dev)) {
+		printk("Device %s is not ready\n", gyro_dev->name);
+		return 0;
+	}
 
-
+	printk("Device initialization success\n");
     display_screens_init();
     lv_scr_load(screens[0].screen);
 
 	display_blanking_off(display_dev);
-
-	//printk("Use the sensor to change LED blinking period\n");
+	
 	blink_set_period_ms(blink, period_ms);
 	k_timer_start(&control_timer, K_MSEC(TICK_PERIOD), K_MSEC(TICK_PERIOD));
 
-	#define SLEEP_TIME_MS   10*60*1000
+	
+
+	sensor_sample_fetch(gyro_dev);
+	sensor_channel_get(gyro_dev, SENSOR_CHAN_GYRO_XYZ, gyr);
+
+	printk("GX: %d.%d; GY: %d.%d; GZ: %d.%d;\n",
+			gyr[0].val1, gyr[0].val2,
+			gyr[1].val1, gyr[1].val2,
+			gyr[2].val1, gyr[2].val2);
+
 	while (1) {
 
         k_msleep(SLEEP_TIME_MS);
