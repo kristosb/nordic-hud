@@ -12,5 +12,6 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(app LANGUAGES C)
 
 target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/lv_scale.c)
 
 #set(LVGL_DIR ${ZEPHYR_LVGL_MODULE_DIR})

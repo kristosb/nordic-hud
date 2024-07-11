@@ -1,8 +1,9 @@
-# Copyright (c) 2021 Legrand North America, LLC.
-# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2024 kristosb
+# MIT License
 
 menu "Custom libraries"
 
 rsource "custom/Kconfig"
+rsource "lv_hud/Kconfig"
 
 endmenu

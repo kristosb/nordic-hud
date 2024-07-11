@@ -14,10 +14,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <lvgl.h>
+//#include <core/lv_group.h>
+
+#include "lv_scale.h"
 
 #include <app/drivers/blink.h>
+#include <app/lib/lv_hud.h>
 
 #include <app_version.h>
+
+//#include "lv_scale.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -66,6 +72,57 @@ static screens_t screens [] = {
     { .screen = NULL, .count = 1, .params = screen0_elements }
 };
 
+/**
+ * A simple horizontal scale
+ */
+void lv_example_scale_1(void)
+{
+    lv_obj_t * scale = lv_scale_create(lv_scr_act());
+    lv_obj_set_size(scale, 80, 110);
+    lv_scale_set_mode(scale, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+
+    static lv_style_t indicator_style;
+    lv_style_init(&indicator_style);
+    /* Label style properties */
+    lv_style_set_text_font(&indicator_style, LV_FONT_DEFAULT);
+    lv_style_set_text_color(&indicator_style, lv_color_black());	//lv_color_hex(0x0000ff)
+    /* Major tick properties */
+    lv_style_set_line_color(&indicator_style, lv_color_black());
+    lv_style_set_width(&indicator_style, 20U); // Tick length
+    lv_style_set_line_width(&indicator_style, 2U); // Tick width
+    lv_obj_add_style(scale, &indicator_style, LV_PART_INDICATOR);
+
+	lv_obj_add_style(scale, &indicator_style, LV_PART_ITEMS);
+	lv_obj_add_style(scale, &indicator_style, LV_PART_MAIN);
+
+	// static lv_style_t minor_ticks_style;
+    // lv_style_init(&minor_ticks_style);
+    // lv_style_set_line_color(&minor_ticks_style, lv_color_hex(0x0000ff));
+    // lv_style_set_width(&minor_ticks_style, 10U); // Tick length
+    // lv_style_set_line_width(&minor_ticks_style, 2U); // Tick width
+    // lv_obj_add_style(scale, &minor_ticks_style, LV_PART_ITEMS);
+
+    // static lv_style_t main_line_style;
+    // lv_style_init(&main_line_style);
+    // /* Main line properties */
+    // lv_style_set_line_color(&main_line_style, lv_color_hex(0x0000ff));
+    // lv_style_set_line_width(&main_line_style, 2U); // Tick width
+    // lv_obj_add_style(scale, &main_line_style, LV_PART_MAIN);
+
+    lv_obj_center(scale);
+
+    lv_scale_set_label_show(scale, true);
+
+    lv_scale_set_total_tick_count(scale, 6);//11
+    lv_scale_set_major_tick_every(scale, 2);//5
+
+    //lv_obj_set_style_length(scale, 5, LV_PART_ITEMS);
+    //lv_obj_set_style_length(scale, 10, LV_PART_INDICATOR);
+    lv_scale_set_range(scale, 1, 4);
+}
+
+
+
 void display_timer_handler(struct k_timer * timer);
 void control_task_handler(struct k_work * work);
 
@@ -100,7 +157,8 @@ void control_task_handler(struct k_work * work)
 	//printk("x = %d\n", screen0_x_value);
 	screen0_label_value = gyr[0].val1;
 	screen0_x_value = gyr[1].val1;
-	screen0_y_value = gyr[2].val1;
+	//screen0_y_value = gyr[2].val1;
+	screen0_y_value = custom_get_value(0);
     numeric_param_update(screen_id, 0, screen0_label_value, "h: %d");
 	numeric_param_update(screen_id, 1, screen0_x_value, "p: %d");
 	numeric_param_update(screen_id, 2, screen0_y_value, "r: %d");
@@ -114,35 +172,40 @@ void display_screens_init(void)
     static lv_style_t style_main;
     static lv_style_t style_indicator;
 
-    lv_style_init(&style_main);
-    lv_style_set_text_color(&style_main, lv_color_black());
-    lv_style_set_bg_color(&style_main, lv_color_white());
+    // lv_style_init(&style_main);
+    // lv_style_set_text_color(&style_main, lv_color_black());
+    // lv_style_set_bg_color(&style_main, lv_color_white());
 
-    lv_style_init(&style_indicator);
-    lv_style_set_text_color(&style_indicator, lv_color_white());
-    lv_style_set_bg_color(&style_indicator, lv_color_black());
-    lv_style_set_border_width(&style_indicator, 2);
-    lv_style_set_radius(&style_indicator, LV_RADIUS_CIRCLE);
+    // lv_style_init(&style_indicator);
+    // lv_style_set_text_color(&style_indicator, lv_color_white());
+    // lv_style_set_bg_color(&style_indicator, lv_color_black());
+    // lv_style_set_border_width(&style_indicator, 2);
+    // lv_style_set_radius(&style_indicator, LV_RADIUS_CIRCLE);
+
+	
 
 	lv_scr_load(screens[0].screen);
+
+	lv_example_scale_1();
     
-	lv_obj_t *hello_world_label = lv_label_create(lv_scr_act());
-	lv_label_set_text(hello_world_label, "WIKTOR");
-	lv_obj_align_to(hello_world_label, screens[0].screen, LV_ALIGN_TOP_RIGHT, 0, 0);
+	// lv_obj_t *hello_world_label = lv_label_create(lv_scr_act());
+	// lv_label_set_text(hello_world_label, "WIKTOR");
+	// lv_obj_align_to(hello_world_label, screens[0].screen, LV_ALIGN_TOP_RIGHT, 0, 0);
+	
 
 	screen0_label_obj = lv_label_create(lv_scr_act());
 	lv_label_set_text(screen0_label_obj, "11");
-	lv_obj_align_to(screen0_label_obj, NULL, LV_ALIGN_LEFT_MID, 0, -20);
+	lv_obj_align_to(screen0_label_obj, NULL, LV_ALIGN_LEFT_MID, 0, 0);
 	screen0_label_value = 55;
 
 	screen0_x_obj = lv_label_create(lv_scr_act());
 	lv_label_set_text(screen0_x_obj, "22");
-	lv_obj_align_to(screen0_x_obj, NULL, LV_ALIGN_LEFT_MID, 0, 0);
+	lv_obj_align_to(screen0_x_obj, NULL, LV_ALIGN_LEFT_MID, 0, 20);
 	screen0_x_value = 22;
 
 	screen0_y_obj = lv_label_create(lv_scr_act());
 	lv_label_set_text(screen0_y_obj, "33");
-	lv_obj_align_to(screen0_y_obj, NULL, LV_ALIGN_LEFT_MID, 0, 20);
+	lv_obj_align_to(screen0_y_obj, NULL, LV_ALIGN_LEFT_MID, 0, 40);
 	screen0_y_value = 33;
 
 }
@@ -167,7 +230,7 @@ int main(void)
 
 
 	printk("Zephyr Example Application %s\n", APP_VERSION_STRING);
-
+	printk("LVGL %d\n", LV_KEY_UP);
     if (!device_is_ready(led.port)) {
         return 0;
 	}
