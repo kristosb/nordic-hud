@@ -14,16 +14,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <lvgl.h>
-//#include <core/lv_group.h>
-
-#include "lv_scale.h"
 
 #include <app/drivers/blink.h>
 #include <app/lib/lv_hud.h>
+#include <app/lib/lv_compass.h>
 
 #include <app_version.h>
-
-//#include "lv_scale.h"
 
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
@@ -36,7 +32,6 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 #define LED0_NODE	DT_ALIAS(led0)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-//const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bmi055_g));
 const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bno055_l));
 //const struct device *const gyro_dev = DEVICE_DT_GET_ONE(bosch_bno055);
 
@@ -73,13 +68,13 @@ static screens_t screens [] = {
 };
 
 /**
- * A simple horizontal scale
+ * A simple horizontal comapss
  */
-void lv_example_scale_1(void)
+void lv_example_comapss_1(void)
 {
-    lv_obj_t * scale = lv_scale_create(lv_scr_act());
-    lv_obj_set_size(scale, 80, 110);
-    lv_scale_set_mode(scale, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+    lv_obj_t * comapss = lv_comapss_create(lv_scr_act());
+    lv_obj_set_size(comapss, 80, 110);
+    lv_comapss_set_mode(comapss, LV_COMAPSS_MODE_HORIZONTAL_BOTTOM);
 
     static lv_style_t indicator_style;
     lv_style_init(&indicator_style);
@@ -90,35 +85,19 @@ void lv_example_scale_1(void)
     lv_style_set_line_color(&indicator_style, lv_color_black());
     lv_style_set_width(&indicator_style, 20U); // Tick length
     lv_style_set_line_width(&indicator_style, 2U); // Tick width
-    lv_obj_add_style(scale, &indicator_style, LV_PART_INDICATOR);
+    lv_obj_add_style(comapss, &indicator_style, LV_PART_INDICATOR);
 
-	lv_obj_add_style(scale, &indicator_style, LV_PART_ITEMS);
-	lv_obj_add_style(scale, &indicator_style, LV_PART_MAIN);
+	lv_obj_add_style(comapss, &indicator_style, LV_PART_ITEMS);
+	lv_obj_add_style(comapss, &indicator_style, LV_PART_MAIN);
 
-	// static lv_style_t minor_ticks_style;
-    // lv_style_init(&minor_ticks_style);
-    // lv_style_set_line_color(&minor_ticks_style, lv_color_hex(0x0000ff));
-    // lv_style_set_width(&minor_ticks_style, 10U); // Tick length
-    // lv_style_set_line_width(&minor_ticks_style, 2U); // Tick width
-    // lv_obj_add_style(scale, &minor_ticks_style, LV_PART_ITEMS);
+    lv_obj_center(comapss);
 
-    // static lv_style_t main_line_style;
-    // lv_style_init(&main_line_style);
-    // /* Main line properties */
-    // lv_style_set_line_color(&main_line_style, lv_color_hex(0x0000ff));
-    // lv_style_set_line_width(&main_line_style, 2U); // Tick width
-    // lv_obj_add_style(scale, &main_line_style, LV_PART_MAIN);
+    lv_comapss_set_label_show(comapss, true);
 
-    lv_obj_center(scale);
+    lv_comapss_set_total_tick_count(comapss, 6);//11
+    lv_comapss_set_major_tick_every(comapss, 2);//5
 
-    lv_scale_set_label_show(scale, true);
-
-    lv_scale_set_total_tick_count(scale, 6);//11
-    lv_scale_set_major_tick_every(scale, 2);//5
-
-    //lv_obj_set_style_length(scale, 5, LV_PART_ITEMS);
-    //lv_obj_set_style_length(scale, 10, LV_PART_INDICATOR);
-    lv_scale_set_range(scale, 1, 4);
+    lv_comapss_set_range(comapss, 10, 35);
 }
 
 
@@ -186,7 +165,7 @@ void display_screens_init(void)
 
 	lv_scr_load(screens[0].screen);
 
-	lv_example_scale_1();
+	lv_example_comapss_1();
     
 	// lv_obj_t *hello_world_label = lv_label_create(lv_scr_act());
 	// lv_label_set_text(hello_world_label, "WIKTOR");

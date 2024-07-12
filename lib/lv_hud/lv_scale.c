@@ -6,8 +6,9 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_scale.h"
-#if LV_USE_SCALE != 0
+//#include "lv_scale.h"
+#include <app/lib/lv_scale.h>
+//#if LV_USE_SCALE != 0
 
 // #include "../../core/lv_group.h"
 // #include "../../misc/lv_assert.h"
@@ -1531,4 +1532,4 @@ static void scale_free_line_needle_points_cb(lv_event_t * e)
     lv_free(needle_line_points);
 }
 
-#endif
+//#endif
