@@ -6,7 +6,7 @@
 /*********************
  *      INCLUDES
  *********************/
-
+#include <math.h>
 #include <app/lib/lv_compass.h>
 
 #include <core/lv_group.h>
@@ -48,15 +48,18 @@ static void lv_comapss_event(const lv_obj_class_t * class_p, lv_event_t * event)
 
 static void comapss_draw_main(lv_obj_t * obj, lv_event_t * event);
 static void comapss_draw_indicator(lv_obj_t * obj, lv_event_t * event);
+static void comapss_draw_needle(lv_obj_t * obj, lv_event_t * event);
 static void comapss_draw_label(lv_obj_t * obj, lv_event_t * event, lv_draw_label_dsc_t * label_dsc,
-                             const uint32_t major_tick_idx, const int32_t tick_value, lv_point_t * tick_point_b, const uint32_t tick_idx);
+                             const uint32_t major_tick_idx, const int32_t tick_value, lv_point_t * tick_point_b, const uint32_t tick_idx, bool above);
 static void comapss_calculate_main_compensation(lv_obj_t * obj);
 
 static void comapss_get_center(const lv_obj_t * obj, lv_point_t * center, int32_t * arc_r);
 static void comapss_get_tick_points(lv_obj_t * obj, const uint32_t tick_idx, bool is_major_tick,
                                   lv_point_t * tick_point_a, lv_point_t * tick_point_b);
+static void comapss_get_tick_points_offset(lv_obj_t * obj, uint32_t tick_idx, int32_t fine_tick_val, int8_t tick_type,
+                                  lv_point_t * tick_point_a, lv_point_t * tick_point_b);
 static void comapss_get_label_coords(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc, const char * text, lv_point_t * tick_point,
-                                   lv_area_t * label_coords);
+                                   lv_area_t * label_coords, bool above);
 static void comapss_set_indicator_label_properties(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc,
                                                  lv_style_t * indicator_section_style);
 static void comapss_set_line_properties(lv_obj_t * obj, lv_draw_line_dsc_t * line_dsc, lv_style_t * section_style,
@@ -161,8 +164,34 @@ void lv_comapss_set_range(lv_obj_t * obj, int32_t min, int32_t max)
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_comapss_t * comapss = (lv_comapss_t *)obj;
 
-    comapss->range_min = min;
-    comapss->range_max = max;
+    //comapss->range_min = min;
+    //comapss->range_max = max;
+
+    lv_obj_invalidate(obj);
+}
+
+int32_t lv_compass_limit(int32_t value)
+{
+    if(value < 0) value = value + 360;
+    if(value > 359) value = value -360;
+    return value;
+}
+
+void lv_comapss_set_direction_angle(lv_obj_t * obj, int32_t direction)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_comapss_t * comapss = (lv_comapss_t *)obj;
+
+    comapss->dir_angle = direction;
+
+    int scale = 10; // tick lenght
+    int tickRange = 2;  // number of ticks
+    int scaleStart = lv_compass_limit(floor(comapss->dir_angle/scale)*scale-floor(scale*tickRange/2));
+    int scaleStop = lv_compass_limit(floor(comapss->dir_angle/scale)*scale+ floor(scale*tickRange/2));
+
+    
+    comapss->range_min = scaleStart;//direction - 15;
+    comapss->range_max = scaleStop;//direction + 10;;
 
     lv_obj_invalidate(obj);
 }
@@ -501,31 +530,35 @@ static void lv_comapss_event(const lv_obj_class_t * class_p, lv_event_t * event)
 
     if(event_code == LV_EVENT_DRAW_MAIN) {
         if(comapss->post_draw == false) {
-            comapss_find_section_tick_idx(obj);
-            comapss_calculate_main_compensation(obj);
+            //omapss_find_section_tick_idx(obj);
+            //comapss_calculate_main_compensation(obj);
 
             if(comapss->draw_ticks_on_top) {
-                comapss_draw_main(obj, event);
+                //comapss_draw_main(obj, event);
                 comapss_draw_indicator(obj, event);
+                comapss_draw_needle(obj, event);
             }
             else {
                 comapss_draw_indicator(obj, event);
-                comapss_draw_main(obj, event);
+                comapss_draw_needle(obj, event);
+                //comapss_draw_main(obj, event);
             }
         }
     }
     if(event_code == LV_EVENT_DRAW_POST) {
         if(comapss->post_draw == true) {
-            comapss_find_section_tick_idx(obj);
-            comapss_calculate_main_compensation(obj);
+            //comapss_find_section_tick_idx(obj);
+            //comapss_calculate_main_compensation(obj);
 
             if(comapss->draw_ticks_on_top) {
-                comapss_draw_main(obj, event);
+                //comapss_draw_main(obj, event);
                 comapss_draw_indicator(obj, event);
+                comapss_draw_needle(obj, event);
             }
             else {
                 comapss_draw_indicator(obj, event);
-                comapss_draw_main(obj, event);
+                comapss_draw_needle(obj, event);
+                //comapss_draw_main(obj, event);
             }
         }
     }
@@ -571,16 +604,19 @@ static void comapss_draw_indicator(lv_obj_t * obj, lv_event_t * event)
     const uint32_t total_tick_count = comapss->total_tick_count;
     uint32_t tick_idx = 0;
     uint32_t major_tick_idx = 0;
+
+    int32_t tick_value = comapss->range_min;
     for(tick_idx = 0; tick_idx < total_tick_count; tick_idx++) {
         // A major tick is the one which has a label in it 
-        bool is_major_tick = false;
-        if(tick_idx % comapss->major_tick_every == 0) is_major_tick = true;
-        if(is_major_tick) major_tick_idx++;
+        uint8_t tick_type = 0;
+        if(tick_idx % comapss->major_tick_every == 0) tick_type = 1;
+        if(tick_type == 1) major_tick_idx++;
 
-        const int32_t tick_value = lv_map(tick_idx, 0U, total_tick_count - 1, comapss->range_min, comapss->range_max);
+        //const int32_t tick_value = lv_map(tick_idx, 0U, total_tick_count - 1, comapss->range_min, comapss->range_max);
+        tick_value = lv_compass_limit(tick_value);
 
         // Overwrite label and tick properties if tick value is within section range 
-        lv_comapss_section_t * section;
+        /*lv_comapss_section_t * section;
         _LV_LL_READ_BACK(&comapss->section_ll, section) {
             if(section->minor_range <= tick_value && section->major_range >= tick_value) {
                 if(is_major_tick) {
@@ -598,21 +634,20 @@ static void comapss_draw_indicator(lv_obj_t * obj, lv_event_t * event)
                 lv_obj_init_draw_line_dsc(obj, LV_PART_INDICATOR, &major_tick_dsc);
                 lv_obj_init_draw_line_dsc(obj, LV_PART_ITEMS, &minor_tick_dsc);
             }
-        }
+        }*/
 
         // The tick is represented by a line. We need two points to draw it 
         lv_point_t tick_point_a;
         lv_point_t tick_point_b;
-        comapss_get_tick_points(obj, tick_idx, is_major_tick, &tick_point_a, &tick_point_b);
+        int32_t fine_tick_idx = (comapss->dir_angle % 10) - 0;
+        comapss_get_tick_points_offset(obj, tick_idx, fine_tick_idx, tick_type, &tick_point_a, &tick_point_b);
 
-        // tick_point_a.x +=5;
-        // tick_point_b.x +=5;
         // Setup a label if they're enabled and we're drawing a major tick 
-        if(comapss->label_enabled && is_major_tick) {
-            comapss_draw_label(obj, event, &label_dsc, major_tick_idx, tick_value, &tick_point_b, tick_idx);
+        if(comapss->label_enabled && tick_type == 1) {
+            comapss_draw_label(obj, event, &label_dsc, major_tick_idx, tick_value, &tick_point_a, tick_idx, true);
         }
 
-        if(is_major_tick) {
+        if(tick_type == 1) {
             //major_tick_dsc.p1 = lv_point_to_precise(&tick_point_a);
             //major_tick_dsc.p2 = lv_point_to_precise(&tick_point_b);
             lv_draw_line(layer, &major_tick_dsc, &tick_point_a, &tick_point_b);
@@ -623,12 +658,54 @@ static void comapss_draw_indicator(lv_obj_t * obj, lv_event_t * event)
             //lv_draw_line(layer, &minor_tick_dsc);
             lv_draw_line(layer, &minor_tick_dsc, &tick_point_a, &tick_point_b);
         }
+        tick_value += 5;
     }
+}
+
+static void comapss_draw_needle(lv_obj_t * obj, lv_event_t * event)
+{
+    lv_comapss_t * comapss = (lv_comapss_t *)obj;
+    lv_draw_layer_ctx_t * layer = lv_event_get_draw_ctx(event);
+
+    if(comapss->total_tick_count <= 1) return;
+
+    lv_draw_label_dsc_t label_dsc;
+    lv_draw_label_dsc_init(&label_dsc);
+    // Formatting the labels with the configured style for LV_PART_INDICATOR 
+    lv_obj_init_draw_label_dsc(obj, LV_PART_INDICATOR, &label_dsc);
+
+    // Major tick style 
+    lv_draw_line_dsc_t niddle_dsc;
+    lv_draw_line_dsc_init(&niddle_dsc);
+    lv_obj_init_draw_line_dsc(obj, LV_PART_INDICATOR, &niddle_dsc);
+    if(LV_COMAPSS_MODE_ROUND_OUTER == comapss->mode || LV_COMAPSS_MODE_ROUND_INNER == comapss->mode) {
+        niddle_dsc.raw_end = 0;
+    }
+
+    const uint32_t total_tick_count = comapss->total_tick_count;
+    uint32_t tick_idx = comapss->total_tick_count/2;
+    //uint32_t major_tick_idx = 0;
+
+    int32_t tick_value = comapss->dir_angle;
+
+    // The tick is represented by a line. We need two points to draw it 
+    lv_point_t tick_point_a;
+    lv_point_t tick_point_b;
+
+    comapss_get_tick_points_offset(obj, tick_idx, 0, 2 , &tick_point_a, &tick_point_b);
+
+    // Setup a label if they're enabled and we're drawing a major tick 
+    if(comapss->label_enabled ) {
+        comapss_draw_label(obj, event, &label_dsc, 0, tick_value, &tick_point_b, tick_idx, false);
+    }
+
+    lv_draw_line(layer, &niddle_dsc, &tick_point_a, &tick_point_b);
+
 }
 
 static void comapss_draw_label(lv_obj_t * obj, lv_event_t * event, lv_draw_label_dsc_t * label_dsc,
                              const uint32_t major_tick_idx, const int32_t tick_value, lv_point_t * tick_point_b,
-                             const uint32_t tick_idx)
+                             const uint32_t tick_idx, bool above)
 {
     lv_comapss_t * comapss = (lv_comapss_t *)obj;
     lv_draw_layer_ctx_t * layer = lv_event_get_draw_ctx(event);
@@ -649,7 +726,7 @@ static void comapss_draw_label(lv_obj_t * obj, lv_event_t * event, lv_draw_label
 
     if((LV_COMAPSS_MODE_VERTICAL_LEFT == comapss->mode || LV_COMAPSS_MODE_VERTICAL_RIGHT == comapss->mode)
        || (LV_COMAPSS_MODE_HORIZONTAL_BOTTOM == comapss->mode || LV_COMAPSS_MODE_HORIZONTAL_TOP == comapss->mode)) {
-        comapss_get_label_coords(obj, label_dsc,text_buffer, tick_point_b, &label_coords);
+        comapss_get_label_coords(obj, label_dsc,text_buffer, tick_point_b, &label_coords, above);
     }
     else if(LV_COMAPSS_MODE_ROUND_OUTER == comapss->mode || LV_COMAPSS_MODE_ROUND_INNER == comapss->mode) {
         lv_area_t comapss_area;
@@ -681,7 +758,7 @@ static void comapss_draw_label(lv_obj_t * obj, lv_event_t * event, lv_draw_label
         point.x = center_point.x + radius_text;
         point.y = center_point.y;
         lv_point_transform(&point, angle_upcomapss, LV_COMAPSS_NONE, &center_point);
-        comapss_get_label_coords(obj, label_dsc,text_buffer, &point, &label_coords);
+        comapss_get_label_coords(obj, label_dsc,text_buffer, &point, &label_coords, above);
     }
     // Invalid mode 
     else {
@@ -714,18 +791,20 @@ static void comapss_calculate_main_compensation(lv_obj_t * obj)
 
     uint32_t tick_idx = 0;
     uint32_t major_tick_idx = 0;
+    int32_t tick_value = comapss->range_min;
     for(tick_idx = 0; tick_idx < total_tick_count; tick_idx++) {
 
-        const bool is_major_tick = tick_idx % comapss->major_tick_every == 0;
-        if(is_major_tick) major_tick_idx++;
+        uint8_t tick_type = tick_idx % comapss->major_tick_every == 0 ? 1 : 0;
+        if(tick_type = 1) major_tick_idx++;
 
-        const int32_t tick_value = lv_map(tick_idx, 0U, total_tick_count - 1, comapss->range_min, comapss->range_max);
+        //const int32_t tick_value = lv_map(tick_idx, 0U, total_tick_count - 1, comapss->range_min, comapss->range_max);
+        tick_value = lv_compass_limit(tick_value);
 
         /* Overwrite label and tick properties if tick value is within section range */
         lv_comapss_section_t * section;
         _LV_LL_READ_BACK(&comapss->section_ll, section) {
             if(section->minor_range <= tick_value && section->major_range >= tick_value) {
-                if(is_major_tick) {
+                if(tick_type == 1) {
                     comapss_set_line_properties(obj, &major_tick_dsc, section->indicator_style, LV_PART_INDICATOR);
                 }
                 else {
@@ -743,13 +822,15 @@ static void comapss_calculate_main_compensation(lv_obj_t * obj)
         /* The tick is represented by a line. We need two points to draw it */
         lv_point_t tick_point_a;
         lv_point_t tick_point_b;
-        comapss_get_tick_points(obj, tick_idx, is_major_tick, &tick_point_a, &tick_point_b);
-
+        int32_t fine_tick_idx = (comapss->dir_angle % 10) -0;
+        comapss_get_tick_points_offset(obj, tick_idx, fine_tick_idx, tick_type, &tick_point_a, &tick_point_b);
+        const bool is_major_tick = tick_type == 1 ? true : false;
         /* Store initial and last tick widths to be used in the main line drawing */
         comapss_store_main_line_tick_width_compensation(obj, tick_idx, is_major_tick, major_tick_dsc.width, minor_tick_dsc.width);
         /* Store the first and last section tick vertical/horizontal position */
         comapss_store_section_line_tick_width_compensation(obj, is_major_tick, &major_tick_dsc, &minor_tick_dsc,
                                                          tick_value, tick_idx, &tick_point_a);
+        tick_value += 5;
     }
 }
 
@@ -1113,6 +1194,207 @@ static void comapss_get_tick_points(lv_obj_t * obj, const uint32_t tick_idx, boo
 }
 
 /**
+ * Get points for ticks
+ *
+ * In order to draw ticks we need two points, this interface returns both points for all comapss modes.
+ *
+ * @param obj       pointer to a comapss object
+ * @param tick_idx  index of the current tick
+ * @param is_major_tick true if tick_idx is a major tick
+ * @param tick_point_a  pointer to point 'a' of the tick
+ * @param tick_point_b  pointer to point 'b' of the tick
+ */
+static void comapss_get_tick_points_offset(lv_obj_t * obj, uint32_t tick_idx, int32_t fine_tick_val, int8_t tick_type,
+                                  lv_point_t * tick_point_a, lv_point_t * tick_point_b)
+{
+
+    lv_comapss_t * comapss = (lv_comapss_t *)obj;
+
+    /* Main line style */
+    lv_draw_line_dsc_t main_line_dsc;
+    lv_draw_line_dsc_init(&main_line_dsc);
+    lv_obj_init_draw_line_dsc(obj, LV_PART_MAIN, &main_line_dsc);
+
+    int32_t minor_len = 0;
+    int32_t major_len = 0;
+
+    int32_t fine_tick_range = 5;
+    //int32_t fine_tick_val = 0;
+    tick_idx =  - fine_tick_val + (tick_idx * fine_tick_range);
+
+    if(tick_type == 1) {
+        major_len = 10;//lv_obj_get_style_length(obj, LV_PART_INDICATOR);
+    }
+    if(tick_type == 0)  {
+        minor_len = 5;//lv_obj_get_style_length(obj, LV_PART_ITEMS);
+    }
+    if(tick_type == 2)  {
+        major_len = 10;
+    }
+
+    if((LV_COMAPSS_MODE_VERTICAL_LEFT == comapss->mode || LV_COMAPSS_MODE_VERTICAL_RIGHT == comapss->mode)
+       || (LV_COMAPSS_MODE_HORIZONTAL_BOTTOM == comapss->mode || LV_COMAPSS_MODE_HORIZONTAL_TOP == comapss->mode)) {
+
+        /* Get style properties so they can be used in the tick and label drawing */
+        const int32_t border_width = lv_obj_get_style_border_width(obj, LV_PART_MAIN);
+        const int32_t pad_top = lv_obj_get_style_pad_top(obj, LV_PART_MAIN) + border_width;
+        const int32_t pad_bottom = lv_obj_get_style_pad_bottom(obj, LV_PART_MAIN) + border_width;
+        const int32_t pad_right = lv_obj_get_style_pad_right(obj, LV_PART_MAIN) + border_width;
+        const int32_t pad_left = lv_obj_get_style_pad_left(obj, LV_PART_MAIN) + border_width;
+        const int32_t tick_pad_right = lv_obj_get_style_pad_right(obj, LV_PART_ITEMS);
+        const int32_t tick_pad_left = lv_obj_get_style_pad_left(obj, LV_PART_ITEMS);
+        const int32_t tick_pad_top = lv_obj_get_style_pad_top(obj, LV_PART_ITEMS);
+        const int32_t tick_pad_bottom = lv_obj_get_style_pad_bottom(obj, LV_PART_ITEMS);
+
+        int32_t x_ofs = 0U;
+        int32_t y_ofs = 0U;
+
+        if(LV_COMAPSS_MODE_VERTICAL_LEFT == comapss->mode) {
+            x_ofs = obj->coords.x2 + (main_line_dsc.width / 2U) - pad_right;
+            y_ofs = obj->coords.y1 + (pad_top + tick_pad_top);
+        }
+        else if(LV_COMAPSS_MODE_VERTICAL_RIGHT == comapss->mode) {
+            x_ofs = obj->coords.x1 + (main_line_dsc.width / 2U) + pad_left;
+            y_ofs = obj->coords.y1 + (pad_top + tick_pad_top);
+        }
+        else if(LV_COMAPSS_MODE_HORIZONTAL_BOTTOM == comapss->mode) {
+            x_ofs = obj->coords.x1 + (pad_right + tick_pad_right);
+            y_ofs = obj->coords.y1 + (main_line_dsc.width / 2U) + pad_top;
+        }
+        /* LV_COMAPSS_MODE_HORIZONTAL_TOP == comapss->mode */
+        else {
+            x_ofs = obj->coords.x1 + (pad_left + tick_pad_left);
+            y_ofs = obj->coords.y2 + (main_line_dsc.width / 2U) - pad_bottom;
+        }
+        y_ofs += 15;
+        // if(tick_type == 1) y_ofs += 10;
+        // if(tick_type == 0) y_ofs += 10;
+        // if(tick_type == 2) y_ofs += 10;
+        /* Adjust length when tick will be drawn on horizontal top or vertical right comapsss */
+        if((LV_COMAPSS_MODE_HORIZONTAL_TOP == comapss->mode) || (LV_COMAPSS_MODE_VERTICAL_RIGHT == comapss->mode)) {
+            if(tick_type == 1)  {
+                major_len *= -1;
+            }
+            if(tick_type == 0)  {
+                minor_len *= -1;
+            }
+            if(tick_type == 2)  {
+                major_len *= -1;
+            }
+        }
+        else { /* Nothing to do */ }
+
+        int32_t tick_length = major_len;
+
+        if(tick_type == 1)  {
+                tick_length = major_len;
+            }
+        if(tick_type == 0)  {
+                tick_length = minor_len;
+            }
+        if(tick_type == 2)  {
+                tick_length = major_len;
+            }
+        /* NOTE
+         * Minus 1 because tick count starts at 0
+         * TODO
+         * What if total_tick_count is 1? This will lead to an division by 0 further down */
+        const uint32_t tmp_tick_count = (comapss->total_tick_count - 1U) * fine_tick_range;
+
+        /* Calculate the position of the tick points based on the mode and tick index */
+        if(LV_COMAPSS_MODE_VERTICAL_LEFT == comapss->mode || LV_COMAPSS_MODE_VERTICAL_RIGHT == comapss->mode) {
+            /* Vertical position starts at y2 of the comapss main line, we start at y2 because the ticks are drawn from bottom to top */
+            int32_t vertical_position = obj->coords.y2 - (pad_bottom + tick_pad_bottom);
+
+            /* Position the last tick */
+            if(tmp_tick_count == tick_idx) {
+                vertical_position = y_ofs;
+            }
+            /* Otherwise adjust the tick position depending of its index and number of ticks on the comapss */
+            else if(0 != tick_idx) {
+                const int32_t comapss_total_height = lv_obj_get_height(obj) - (pad_top + pad_bottom + tick_pad_top + tick_pad_bottom);
+                const int32_t offset = ((int32_t) tick_idx * (int32_t) comapss_total_height) / (int32_t)(tmp_tick_count);
+                vertical_position -= offset;
+            }
+            else { /* Nothing to do */ }
+
+            tick_point_a->x = x_ofs - 1U; /* Move extra pixel out of comapss boundary */
+            tick_point_a->y = vertical_position;
+            tick_point_b->x = tick_point_a->x - tick_length;
+            tick_point_b->y = vertical_position;
+        }
+        else {
+            /* Horizontal position starts at x1 of the comapss main line */
+            int32_t horizontal_position = x_ofs;
+
+            /* Position the last tick */
+            if(tmp_tick_count == tick_idx) {
+                horizontal_position = obj->coords.x2 - (pad_left + tick_pad_left);
+            }
+            /* Otherwise adjust the tick position depending of its index and number of ticks on the comapss */
+            else if(0U != tick_idx) {
+                const int32_t comapss_total_width = lv_obj_get_width(obj) - (pad_right + pad_left + tick_pad_right + tick_pad_left);
+                const int32_t offset = ((int32_t) tick_idx * (int32_t) comapss_total_width) / (int32_t)(tmp_tick_count);
+                horizontal_position += offset;
+            }
+            else { /* Nothing to do */ }
+
+            tick_point_a->x = horizontal_position;
+            tick_point_a->y = y_ofs;
+            tick_point_b->x = horizontal_position;
+            tick_point_b->y = tick_point_a->y + tick_length;
+        }
+    }
+    else if(LV_COMAPSS_MODE_ROUND_OUTER == comapss->mode || LV_COMAPSS_MODE_ROUND_INNER == comapss->mode) {
+        lv_area_t comapss_area;
+        lv_obj_get_content_coords(obj, &comapss_area);
+
+        /* Find the center of the comapss */
+        lv_point_t center_point;
+        const int32_t radius_edge = LV_MIN(lv_area_get_width(&comapss_area) / 2U, lv_area_get_height(&comapss_area) / 2U);
+        center_point.x = comapss_area.x1 + radius_edge;
+        center_point.y = comapss_area.y1 + radius_edge;
+
+        int32_t angle_upcomapss = ((tick_idx * comapss->angle_range) * 10U) / (comapss->total_tick_count - 1)*fine_tick_range;
+        angle_upcomapss += comapss->rotation * 10U;
+
+        /* Draw a little bit longer lines to be sure the mask will clip them correctly
+         * and to get a better precision. Adding the main line width to the calculation so we don't have gaps
+         * between the arc and the ticks */
+        int32_t point_closer_to_arc = 0;
+        int32_t adjusted_radio_with_tick_len = 0;
+        uint32_t adj_tick = 0;
+        if(tick_type == 1)  {
+                adj_tick = major_len;
+            }
+        if(tick_type == 0)  {
+                adj_tick = minor_len;
+            }
+        if(tick_type == 2)  {
+                adj_tick = major_len;
+            }
+        if(LV_COMAPSS_MODE_ROUND_INNER == comapss->mode) {
+            point_closer_to_arc = radius_edge - main_line_dsc.width;
+            adjusted_radio_with_tick_len = point_closer_to_arc - adj_tick;
+        }
+        /* LV_COMAPSS_MODE_ROUND_OUTER == comapss->mode */
+        else {
+            point_closer_to_arc = radius_edge - main_line_dsc.width;
+            adjusted_radio_with_tick_len = point_closer_to_arc + adj_tick;
+        }
+
+        tick_point_a->x = center_point.x + point_closer_to_arc;
+        tick_point_a->y = center_point.y;
+        lv_point_transform(tick_point_a, angle_upcomapss, LV_COMAPSS_NONE, &center_point);
+
+        tick_point_b->x = center_point.x + adjusted_radio_with_tick_len;
+        tick_point_b->y = center_point.y;
+        lv_point_transform(tick_point_b, angle_upcomapss, LV_COMAPSS_NONE, &center_point);
+    }
+    else { /* Nothing to do */ }
+}
+
+/**
  * Get coordinates for label
  *
  * @param obj       pointer to a comapss object
@@ -1121,33 +1403,34 @@ static void comapss_get_tick_points(lv_obj_t * obj, const uint32_t tick_idx, boo
  * @param label_coords  pointer to label coordinates output
  */
 static void comapss_get_label_coords(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc,const char * text, lv_point_t * tick_point,
-                                   lv_area_t * label_coords)
+                                   lv_area_t * label_coords, bool above)
 {
 
     lv_comapss_t * comapss = (lv_comapss_t *)obj;
-
+    
     /* Reserve appropriate size for the tick label */
     lv_point_t label_size;
     lv_txt_get_size(&label_size, text,
                      label_dsc->font, label_dsc->letter_space, label_dsc->line_space, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
-
+    //tick_point->y = tick_point->y - label_size.y -10;
+    const uint8_t offs_y = above ? label_size.y : 0;
     /* Set the label draw area at some distance of the major tick */
     if((LV_COMAPSS_MODE_HORIZONTAL_BOTTOM == comapss->mode) || (LV_COMAPSS_MODE_HORIZONTAL_TOP == comapss->mode)) {
         label_coords->x1 = tick_point->x - (label_size.x / 2U);
         label_coords->x2 = tick_point->x + (label_size.x / 2U);
 
         if(LV_COMAPSS_MODE_HORIZONTAL_BOTTOM == comapss->mode) {
-            label_coords->y1 = tick_point->y + lv_obj_get_style_pad_bottom(obj, LV_PART_INDICATOR);
+            label_coords->y1 = tick_point->y + lv_obj_get_style_pad_bottom(obj, LV_PART_INDICATOR) - offs_y;
             label_coords->y2 = label_coords->y1 + label_size.y;
         }
         else {
-            label_coords->y2 = tick_point->y - lv_obj_get_style_pad_top(obj, LV_PART_INDICATOR);
+            label_coords->y2 = tick_point->y - lv_obj_get_style_pad_top(obj, LV_PART_INDICATOR) - offs_y;
             label_coords->y1 = label_coords->y2 - label_size.y;
         }
     }
     else if((LV_COMAPSS_MODE_VERTICAL_LEFT == comapss->mode) || (LV_COMAPSS_MODE_VERTICAL_RIGHT == comapss->mode)) {
-        label_coords->y1 = tick_point->y - (label_size.y / 2U);
-        label_coords->y2 = tick_point->y + (label_size.y / 2U);
+        label_coords->y1 = tick_point->y - (label_size.y / 2U) - offs_y;
+        label_coords->y2 = tick_point->y + (label_size.y / 2U) - offs_y;
 
         if(LV_COMAPSS_MODE_VERTICAL_LEFT == comapss->mode) {
             label_coords->x1 = tick_point->x - label_size.x - lv_obj_get_style_pad_left(obj, LV_PART_INDICATOR);
@@ -1160,11 +1443,12 @@ static void comapss_get_label_coords(lv_obj_t * obj, lv_draw_label_dsc_t * label
     }
     else if(LV_COMAPSS_MODE_ROUND_OUTER == comapss->mode || LV_COMAPSS_MODE_ROUND_INNER == comapss->mode) {
         label_coords->x1 = tick_point->x - (label_size.x / 2U);
-        label_coords->y1 = tick_point->y - (label_size.y / 2U);
+        label_coords->y1 = tick_point->y - (label_size.y / 2U) - offs_y;
         label_coords->x2 = label_coords->x1 + label_size.x;
         label_coords->y2 = label_coords->y1 + label_size.y;
     }
     else { /* Nothing to do */ }
+
 }
 
 /**

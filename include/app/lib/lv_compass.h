@@ -91,6 +91,7 @@ typedef struct {
     lv_comapss_mode_t mode;
     int32_t range_min;
     int32_t range_max;
+    int32_t dir_angle;
     uint32_t total_tick_count   : 15;
     uint32_t major_tick_every   : 15;
     uint32_t label_enabled      : 1;
@@ -161,6 +162,19 @@ void lv_comapss_set_label_show(lv_obj_t * obj, bool show_label);
  * @param max       maximum value of the comapss
  */
 void lv_comapss_set_range(lv_obj_t * obj, int32_t min, int32_t max);
+
+/**
+ * Set the direction angle value on a comapss
+ * @param obj           pointer to a comapss object
+ * @param direction       direction angle of the comapss
+ */
+void lv_comapss_set_direction_angle(lv_obj_t * obj, int32_t direction);
+
+/**
+ * Limit the tick values to 0 .. 360
+ * @param value           pointer to a comapss object
+ */
+int32_t lv_compass_limit(int32_t value);
 
 /**
  * Set properties specific to round comapss

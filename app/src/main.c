@@ -27,7 +27,7 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 #define BLINK_PERIOD_MS_STEP 100U
 #define BLINK_PERIOD_MS_MAX  1300U
 
-#define TICK_PERIOD   (300)
+#define TICK_PERIOD   (200)
 
 #define LED0_NODE	DT_ALIAS(led0)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
@@ -55,26 +55,42 @@ typedef struct {
 static lv_obj_t   * screen0_label_obj;
 static lv_obj_t   * screen0_x_obj;
 static lv_obj_t   * screen0_y_obj;
+static lv_obj_t   * compass_obj;
 static short        screen0_label_value;
 static short        screen0_x_value;
 static short        screen0_y_value;
+static short        compass_value;
 static param_t screen0_elements [] = {
     { .object = &screen0_label_obj,  .value = &screen0_label_value, .step = 5, .max = 150, .min = 0},
 	{ .object = &screen0_x_obj,  .value = &screen0_x_value, .step = 5, .max = 150, .min = 0},
 	{ .object = &screen0_y_obj,  .value = &screen0_y_value, .step = 5, .max = 150, .min = 0},
+	{ .object = &compass_obj,  .value = &compass_value, .step = 1, .max = 360, .min = 0},
 };
 static screens_t screens [] = {
     { .screen = NULL, .count = 1, .params = screen0_elements }
 };
 
+
+void numeric_param_update(int screen_id, int param_id, const char *format)
+{
+    param_t * param = &screens[screen_id].params[param_id];
+    if (param == NULL || *param->object == NULL)
+        return;
+
+    if (lv_obj_check_type(*param->object, &lv_label_class)) {
+		lv_label_set_text_fmt(*param->object, format, *param->value); //"X%d: %d"
+        return;
+    }
+}
 /**
  * A simple horizontal comapss
  */
 void lv_example_comapss_1(void)
 {
-    lv_obj_t * comapss = lv_comapss_create(lv_scr_act());
-    lv_obj_set_size(comapss, 80, 110);
-    lv_comapss_set_mode(comapss, LV_COMAPSS_MODE_HORIZONTAL_BOTTOM);
+    //lv_obj_t * comapss = lv_comapss_create(lv_scr_act());
+	compass_obj = lv_comapss_create(lv_scr_act());
+    lv_obj_set_size(compass_obj, 80, 110);
+    lv_comapss_set_mode(compass_obj, LV_COMAPSS_MODE_HORIZONTAL_BOTTOM);
 
     static lv_style_t indicator_style;
     lv_style_init(&indicator_style);
@@ -85,19 +101,20 @@ void lv_example_comapss_1(void)
     lv_style_set_line_color(&indicator_style, lv_color_black());
     lv_style_set_width(&indicator_style, 20U); // Tick length
     lv_style_set_line_width(&indicator_style, 2U); // Tick width
-    lv_obj_add_style(comapss, &indicator_style, LV_PART_INDICATOR);
+    lv_obj_add_style(compass_obj, &indicator_style, LV_PART_INDICATOR);
 
-	lv_obj_add_style(comapss, &indicator_style, LV_PART_ITEMS);
-	lv_obj_add_style(comapss, &indicator_style, LV_PART_MAIN);
+	lv_obj_add_style(compass_obj, &indicator_style, LV_PART_ITEMS);
+	lv_obj_add_style(compass_obj, &indicator_style, LV_PART_MAIN);
 
-    lv_obj_center(comapss);
+    lv_obj_center(compass_obj);
 
-    lv_comapss_set_label_show(comapss, true);
+    lv_comapss_set_label_show(compass_obj, true);
 
-    lv_comapss_set_total_tick_count(comapss, 6);//11
-    lv_comapss_set_major_tick_every(comapss, 2);//5
+    lv_comapss_set_total_tick_count(compass_obj, 5);//11
+    lv_comapss_set_major_tick_every(compass_obj, 2);//5
 
-    lv_comapss_set_range(comapss, 10, 35);
+    //lv_comapss_set_range(comapss, 10, 35);
+	lv_comapss_set_direction_angle(compass_obj, 45);
 }
 
 
@@ -116,7 +133,7 @@ void display_timer_handler(struct k_timer * timer)
 void control_task_handler(struct k_work * work)
 {  
 	static int screen_id = 0;
-    static int param_id  = 0;
+    //static int param_id  = 0;
 
     gpio_pin_toggle_dt(&led);
 
@@ -138,10 +155,11 @@ void control_task_handler(struct k_work * work)
 	screen0_x_value = gyr[1].val1;
 	//screen0_y_value = gyr[2].val1;
 	screen0_y_value = custom_get_value(0);
-    numeric_param_update(screen_id, 0, screen0_label_value, "h: %d");
-	numeric_param_update(screen_id, 1, screen0_x_value, "p: %d");
-	numeric_param_update(screen_id, 2, screen0_y_value, "r: %d");
-
+    numeric_param_update(screen_id, 0, "h: %d");
+	numeric_param_update(screen_id, 1, "p: %d");
+	numeric_param_update(screen_id, 2, "r: %d");
+	compass_value = gyr[0].val1;
+	hud_update(screen_id, 3);
 	lv_task_handler();
 }
 
@@ -189,14 +207,16 @@ void display_screens_init(void)
 
 }
 
-void numeric_param_update(int screen_id, int param_id, short value, const char *format)
+
+
+void hud_update(int screen_id, int param_id)
 {
     param_t * param = &screens[screen_id].params[param_id];
     if (param == NULL || *param->object == NULL)
         return;
 
-    if (lv_obj_check_type(*param->object, &lv_label_class)) {
-		lv_label_set_text_fmt(*param->object, format, *param->value); //"X%d: %d"
+    if (lv_obj_check_type(*param->object, &lv_comapss_class)) {
+		lv_comapss_set_direction_angle(*param->object, *param->value);
         return;
     }
 }
@@ -245,7 +265,7 @@ int main(void)
 
 	printk("Device initialization success\n");
     display_screens_init();
-    lv_scr_load(screens[0].screen);
+    //lv_scr_load(screens[0].screen);
 
 	display_blanking_off(display_dev);
 	
