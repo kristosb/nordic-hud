@@ -147,7 +147,7 @@ lv_obj_t * lv_comapss_create(lv_obj_t * parent);
  *====================*/
 
 /**
- * Set comapss mode. See @ref lv_comapss_mode_t
+ * Set comapss mode. 
  * @param obj       pointer the comapss object
  * @param mode      the new comapss mode
  */
@@ -281,7 +281,7 @@ void lv_comapss_section_set_style(lv_comapss_section_t * section, lv_part_t part
  *====================*/
 
 /**
- * Get comapss mode. See @ref lv_comapss_mode_t
+ * Get comapss mode.
  * @param obj   pointer the comapss object
  * @return      Comapss mode
  */
