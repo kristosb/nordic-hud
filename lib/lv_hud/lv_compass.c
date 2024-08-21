@@ -46,36 +46,37 @@ static void lv_comapss_constructor(const lv_obj_class_t * class_p, lv_obj_t * ob
 static void lv_comapss_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
 static void lv_comapss_event(const lv_obj_class_t * class_p, lv_event_t * event);
 
-static void comapss_draw_main(lv_obj_t * obj, lv_event_t * event);
+//static void comapss_draw_main(lv_obj_t * obj, lv_event_t * event);
 static void comapss_draw_indicator(lv_obj_t * obj, lv_event_t * event);
 static void comapss_draw_needle(lv_obj_t * obj, lv_event_t * event);
 static void comapss_draw_label(lv_obj_t * obj, lv_event_t * event, lv_draw_label_dsc_t * label_dsc,
                              const uint32_t major_tick_idx, const int32_t tick_value, lv_point_t * tick_point_b, const uint32_t tick_idx, bool above);
-static void comapss_calculate_main_compensation(lv_obj_t * obj);
+//static void comapss_calculate_main_compensation(lv_obj_t * obj);
 
-static void comapss_get_center(const lv_obj_t * obj, lv_point_t * center, int32_t * arc_r);
-static void comapss_get_tick_points(lv_obj_t * obj, const uint32_t tick_idx, bool is_major_tick,
-                                  lv_point_t * tick_point_a, lv_point_t * tick_point_b);
+//static void comapss_get_center(const lv_obj_t * obj, lv_point_t * center, int32_t * arc_r);
+/*static void comapss_get_tick_points(lv_obj_t * obj, const uint32_t tick_idx, bool is_major_tick,
+                                  lv_point_t * tick_point_a, lv_point_t * tick_point_b);*/
 static void comapss_get_tick_points_offset(lv_obj_t * obj, uint32_t tick_idx, int32_t fine_tick_val, int8_t tick_type,
                                   lv_point_t * tick_point_a, lv_point_t * tick_point_b);
 static void comapss_get_label_coords(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc, const char * text, lv_point_t * tick_point,
                                    lv_area_t * label_coords, bool above);
-static void comapss_set_indicator_label_properties(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc,
-                                                 lv_style_t * indicator_section_style);
-static void comapss_set_line_properties(lv_obj_t * obj, lv_draw_line_dsc_t * line_dsc, lv_style_t * section_style,
-                                      lv_part_t part);
-static void comapss_set_arc_properties(lv_obj_t * obj, lv_draw_arc_dsc_t * arc_dsc, lv_style_t * section_style);
+/*static void comapss_set_indicator_label_properties(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc,
+                                                 lv_style_t * indicator_section_style);*/
+/*static void comapss_set_line_properties(lv_obj_t * obj, lv_draw_line_dsc_t * line_dsc, lv_style_t * section_style,
+                                      lv_part_t part);*/
+//static void comapss_set_arc_properties(lv_obj_t * obj, lv_draw_arc_dsc_t * arc_dsc, lv_style_t * section_style);
 /* Helpers */
-static void comapss_find_section_tick_idx(lv_obj_t * obj);
-static void comapss_store_main_line_tick_width_compensation(lv_obj_t * obj, const uint32_t tick_idx,
-                                                          const bool is_major_tick, const int32_t major_tick_width, const int32_t minor_tick_width);
-static void comapss_store_section_line_tick_width_compensation(lv_obj_t * obj, const bool is_major_tick,
+//static void comapss_find_section_tick_idx(lv_obj_t * obj);
+/*static void comapss_store_main_line_tick_width_compensation(lv_obj_t * obj, const uint32_t tick_idx,
+                                                          const bool is_major_tick, const int32_t major_tick_width, const int32_t minor_tick_width);*/
+/*static void comapss_store_section_line_tick_width_compensation(lv_obj_t * obj, const bool is_major_tick,
                                                              lv_draw_line_dsc_t * major_tick_dsc, lv_draw_line_dsc_t * minor_tick_dsc,
                                                              const int32_t tick_value, const uint8_t tick_idx, lv_point_t * tick_point_a);
+*/
 static void comapss_build_custom_label_text(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc, const char * text,
                                           const uint16_t major_tick_idx);
 
-static void comapss_free_line_needle_points_cb(lv_event_t * e);
+//static void comapss_free_line_needle_points_cb(lv_event_t * e);
 
 /**********************
  *  STATIC VARIABLES
@@ -162,7 +163,7 @@ void lv_comapss_set_label_show(lv_obj_t * obj, bool show_label)
 void lv_comapss_set_range(lv_obj_t * obj, int32_t min, int32_t max)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
-    lv_comapss_t * comapss = (lv_comapss_t *)obj;
+    //lv_comapss_t * comapss = (lv_comapss_t *)obj;
 
     //comapss->range_min = min;
     //comapss->range_max = max;
@@ -268,10 +269,12 @@ void lv_comapss_set_line_needle_value(lv_obj_t * obj, lv_obj_t * needle_line, in
     needle_length_x = (actual_needle_length * lv_trigo_cos(comapss->rotation + angle)) >> LV_TRIGO_SHIFT;
     needle_length_y = (actual_needle_length * lv_trigo_sin(comapss->rotation + angle)) >> LV_TRIGO_SHIFT;
 
+    /* no reference error
     if(lv_line_is_point_array_mutable(needle_line) && lv_line_get_point_count(needle_line) >= 2) {
         needle_line_points = lv_line_get_points_mutable(needle_line);
-    }
+    }*/
 
+    /* no reference error
     if(needle_line_points == NULL) {
         uint32_t i;
         uint32_t line_event_cnt = lv_obj_get_event_count(needle_line);
@@ -282,21 +285,24 @@ void lv_comapss_set_line_needle_value(lv_obj_t * obj, lv_obj_t * needle_line, in
                 break;
             }
         }
-    }
+    }*/
 
+    /* no reference error
     if(needle_line_points == NULL) {
         needle_line_points = lv_malloc(sizeof(lv_point_t) * 2);
         LV_ASSERT_MALLOC(needle_line_points);
         if(needle_line_points == NULL) return;
         lv_obj_add_event_cb(needle_line, comapss_free_line_needle_points_cb, LV_EVENT_DELETE, needle_line_points);
-    }
+    }*/
 
     needle_line_points[0].x = comapss_width / 2;
     needle_line_points[0].y = comapss_height / 2;
     needle_line_points[1].x = comapss_width / 2 + needle_length_x;
     needle_line_points[1].y = comapss_height / 2 + needle_length_y;
 
+    /* no reference error
     lv_line_set_points_mutable(needle_line, needle_line_points, 2);
+    */
 }
 
 void lv_comapss_set_image_needle_value(lv_obj_t * obj, lv_obj_t * needle_img, int32_t value)
@@ -574,7 +580,9 @@ static void lv_comapss_event(const lv_obj_class_t * class_p, lv_event_t * event)
 static void comapss_draw_indicator(lv_obj_t * obj, lv_event_t * event)
 {
     lv_comapss_t * comapss = (lv_comapss_t *)obj;
-    lv_draw_layer_ctx_t * layer = lv_event_get_draw_ctx(event);
+    //lv_draw_layer_ctx_t * layer = lv_event_get_draw_ctx(event);
+    lv_draw_ctx_t *layer = lv_event_get_draw_ctx(event);
+
 
     if(comapss->total_tick_count <= 1) return;
 
@@ -665,7 +673,7 @@ static void comapss_draw_indicator(lv_obj_t * obj, lv_event_t * event)
 static void comapss_draw_needle(lv_obj_t * obj, lv_event_t * event)
 {
     lv_comapss_t * comapss = (lv_comapss_t *)obj;
-    lv_draw_layer_ctx_t * layer = lv_event_get_draw_ctx(event);
+    lv_draw_layer_ctx_t * layer = (lv_draw_layer_ctx_t *) lv_event_get_draw_ctx(event);
 
     if(comapss->total_tick_count <= 1) return;
 
@@ -682,7 +690,7 @@ static void comapss_draw_needle(lv_obj_t * obj, lv_event_t * event)
         niddle_dsc.raw_end = 0;
     }
 
-    const uint32_t total_tick_count = comapss->total_tick_count;
+    //const uint32_t total_tick_count = comapss->total_tick_count;
     uint32_t tick_idx = comapss->total_tick_count/2;
     //uint32_t major_tick_idx = 0;
 
@@ -699,7 +707,7 @@ static void comapss_draw_needle(lv_obj_t * obj, lv_event_t * event)
         comapss_draw_label(obj, event, &label_dsc, 0, tick_value, &tick_point_b, tick_idx, false);
     }
 
-    lv_draw_line(layer, &niddle_dsc, &tick_point_a, &tick_point_b);
+    lv_draw_line((struct _lv_draw_ctx_t *)layer, &niddle_dsc, &tick_point_a, &tick_point_b);
 
 }
 
@@ -708,7 +716,7 @@ static void comapss_draw_label(lv_obj_t * obj, lv_event_t * event, lv_draw_label
                              const uint32_t tick_idx, bool above)
 {
     lv_comapss_t * comapss = (lv_comapss_t *)obj;
-    lv_draw_layer_ctx_t * layer = lv_event_get_draw_ctx(event);
+    lv_draw_layer_ctx_t * layer = (lv_draw_layer_ctx_t *) lv_event_get_draw_ctx(event);
 
     // Label text setup 
     char text_buffer[LV_COMAPSS_LABEL_TXT_LEN] = {0};
@@ -765,9 +773,9 @@ static void comapss_draw_label(lv_obj_t * obj, lv_event_t * event, lv_draw_label
         return;
     }
     //lv_draw_label_hint_t * hint; //??
-    lv_draw_label(layer, label_dsc, &label_coords, text_buffer, NULL);
+    lv_draw_label((struct _lv_draw_ctx_t *)layer, label_dsc, &label_coords, text_buffer, NULL);
 }
-
+#ifdef False
 static void comapss_calculate_main_compensation(lv_obj_t * obj)
 {
 
@@ -795,7 +803,7 @@ static void comapss_calculate_main_compensation(lv_obj_t * obj)
     for(tick_idx = 0; tick_idx < total_tick_count; tick_idx++) {
 
         uint8_t tick_type = tick_idx % comapss->major_tick_every == 0 ? 1 : 0;
-        if(tick_type = 1) major_tick_idx++;
+        if(tick_type == 1) major_tick_idx++;
 
         //const int32_t tick_value = lv_map(tick_idx, 0U, total_tick_count - 1, comapss->range_min, comapss->range_max);
         tick_value = lv_compass_limit(tick_value);
@@ -833,7 +841,8 @@ static void comapss_calculate_main_compensation(lv_obj_t * obj)
         tick_value += 5;
     }
 }
-
+#endif
+#ifdef False
 static void comapss_draw_main(lv_obj_t * obj, lv_event_t * event)
 {
 
@@ -1002,13 +1011,14 @@ static void comapss_draw_main(lv_obj_t * obj, lv_event_t * event)
     }
     else { /* Nothing to do */ }
 }
-
+#endif
 /**
  * Get center point and radius of comapss arc
  * @param obj       pointer to a comapss object
  * @param center    pointer to center
  * @param arc_r     pointer to arc radius
  */
+#ifdef False
 static void comapss_get_center(const lv_obj_t * obj, lv_point_t * center, int32_t * arc_r)
 {
 
@@ -1024,7 +1034,7 @@ static void comapss_get_center(const lv_obj_t * obj, lv_point_t * center, int32_
 
     if(arc_r) *arc_r = r;
 }
-
+#endif
 /**
  * Get points for ticks
  *
@@ -1036,6 +1046,7 @@ static void comapss_get_center(const lv_obj_t * obj, lv_point_t * center, int32_
  * @param tick_point_a  pointer to point 'a' of the tick
  * @param tick_point_b  pointer to point 'b' of the tick
  */
+#ifdef False
 static void comapss_get_tick_points(lv_obj_t * obj, const uint32_t tick_idx, bool is_major_tick,
                                   lv_point_t * tick_point_a, lv_point_t * tick_point_b)
 {
@@ -1192,7 +1203,7 @@ static void comapss_get_tick_points(lv_obj_t * obj, const uint32_t tick_idx, boo
     }
     else { /* Nothing to do */ }
 }
-
+#endif
 /**
  * Get points for ticks
  *
@@ -1461,6 +1472,7 @@ static void comapss_get_label_coords(lv_obj_t * obj, lv_draw_label_dsc_t * label
  * @param items_section_style  pointer to indicator section style
  * @param part      line part, example: LV_PART_INDICATOR, LV_PART_ITEMS, LV_PART_MAIN
  */
+#ifdef False
 static void comapss_set_line_properties(lv_obj_t * obj, lv_draw_line_dsc_t * line_dsc, lv_style_t * section_style,
                                       lv_part_t part)
 {
@@ -1502,7 +1514,7 @@ static void comapss_set_line_properties(lv_obj_t * obj, lv_draw_line_dsc_t * lin
         line_dsc->width = lv_obj_get_style_line_width(obj, part);
     }
 }
-
+#endif
 /**
  * Set arc properties
  *
@@ -1512,6 +1524,7 @@ static void comapss_set_line_properties(lv_obj_t * obj, lv_draw_line_dsc_t * lin
  * @param line_dsc  pointer to arc descriptor
  * @param items_section_style  pointer to indicator section style
  */
+#ifdef False
 static void comapss_set_arc_properties(lv_obj_t * obj, lv_draw_arc_dsc_t * arc_dsc, lv_style_t * section_style)
 {
 
@@ -1552,7 +1565,7 @@ static void comapss_set_arc_properties(lv_obj_t * obj, lv_draw_arc_dsc_t * arc_d
         arc_dsc->width = lv_obj_get_style_line_width(obj, LV_PART_MAIN);
     }
 }
-
+#endif
 /**
  * Set indicator label properties
  *
@@ -1562,6 +1575,7 @@ static void comapss_set_arc_properties(lv_obj_t * obj, lv_draw_arc_dsc_t * arc_d
  * @param label_dsc  pointer to label descriptor
  * @param items_section_style  pointer to indicator section style
  */
+#ifdef False
 static void comapss_set_indicator_label_properties(lv_obj_t * obj, lv_draw_label_dsc_t * label_dsc,
                                                  lv_style_t * indicator_section_style)
 {
@@ -1614,7 +1628,8 @@ static void comapss_set_indicator_label_properties(lv_obj_t * obj, lv_draw_label
         label_dsc->font = lv_obj_get_style_text_font(obj, LV_PART_INDICATOR);
     }
 }
-
+#endif
+#ifdef False
 static void comapss_find_section_tick_idx(lv_obj_t * obj)
 {
 
@@ -1649,7 +1664,7 @@ static void comapss_find_section_tick_idx(lv_obj_t * obj)
     }
 
 }
-
+#endif
 /**
  * Stores the width of the initial and last tick of the main line
  *
@@ -1661,6 +1676,7 @@ static void comapss_find_section_tick_idx(lv_obj_t * obj)
  * @param major_tick_width width of the major tick
  * @param minor_tick_width width of the minor tick
  */
+#ifdef False
 static void comapss_store_main_line_tick_width_compensation(lv_obj_t * obj, const uint32_t tick_idx,
                                                           const bool is_major_tick, const int32_t major_tick_width, const int32_t minor_tick_width)
 {
@@ -1699,7 +1715,7 @@ static void comapss_store_main_line_tick_width_compensation(lv_obj_t * obj, cons
         }
     }
 }
-
+#endif
 /**
  * Sets the text of the tick label descriptor when using custom labels
  *
@@ -1743,6 +1759,7 @@ static void comapss_build_custom_label_text(lv_obj_t * obj, lv_draw_label_dsc_t 
  * @param tick_idx Current tick index
  * @param tick_point_a Pointer to tick point a
  */
+#ifdef False
 static void comapss_store_section_line_tick_width_compensation(lv_obj_t * obj, const bool is_major_tick,
                                                              lv_draw_line_dsc_t * major_tick_dsc, lv_draw_line_dsc_t * minor_tick_dsc,
                                                              const int32_t tick_value, const uint8_t tick_idx, lv_point_t * tick_point_a)
@@ -1806,11 +1823,12 @@ static void comapss_store_section_line_tick_width_compensation(lv_obj_t * obj, c
         else { /* Nothing to do */ }
     }
 }
-
+#endif
+#ifdef False
 static void comapss_free_line_needle_points_cb(lv_event_t * e)
 {
     lv_point_t * needle_line_points = lv_event_get_user_data(e);
-    lv_free(needle_line_points);
+    //lv_free(needle_line_points);
 }
-
+#endif
 //#endif

@@ -70,6 +70,15 @@ static screens_t screens [] = {
     { .screen = NULL, .count = 1, .params = screen0_elements }
 };
 
+void numeric_param_update(int screen_id, int param_id, const char *format);
+void lv_example_comapss_1(void);
+void display_timer_handler(struct k_timer * timer);
+void control_task_handler(struct k_work * work);
+void display_screens_init(void);
+void hud_update(int screen_id, int param_id);
+
+K_TIMER_DEFINE(control_timer, display_timer_handler, NULL);
+K_WORK_DEFINE(control_work, control_task_handler);
 
 void numeric_param_update(int screen_id, int param_id, const char *format)
 {
@@ -119,12 +128,6 @@ void lv_example_comapss_1(void)
 
 
 
-void display_timer_handler(struct k_timer * timer);
-void control_task_handler(struct k_work * work);
-
-K_TIMER_DEFINE(control_timer, display_timer_handler, NULL);
-K_WORK_DEFINE(control_work, control_task_handler);
-
 void display_timer_handler(struct k_timer * timer)
 {
     k_work_submit(&control_work);
@@ -166,8 +169,8 @@ void control_task_handler(struct k_work * work)
 void display_screens_init(void)
 {
     screens[0].screen = lv_obj_create(NULL);
-    static lv_style_t style_main;
-    static lv_style_t style_indicator;
+    // static lv_style_t style_main;
+    // static lv_style_t style_indicator;
 
     // lv_style_init(&style_main);
     // lv_style_set_text_color(&style_main, lv_color_black());

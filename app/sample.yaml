@@ -12,7 +12,7 @@ common:
   #   - lvgl
 tests:
   app.default: {}
-  app.debug:
-    extra_overlay_confs:
-      - debug.conf
+  # app.debug:
+  #   extra_overlay_confs:
+  #     - debug.conf
 
