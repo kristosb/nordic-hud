@@ -28,18 +28,6 @@ SOFTWARE.
 #ifndef LV_COMPASS_H
 #define LV_COMPASS_H
 
-/**
- * @defgroup lv_compass lvgl compas widget
- * @ingroup lib
- * @{
- *
- * @brief Library for compass data graphis visualizetion.
- *
- * This is lvgl library for compas data
- * 
- */
-
-
 // #ifdef __cplusplus
 // extern "C" {
 // #endif
