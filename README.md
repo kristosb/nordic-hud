@@ -120,7 +120,7 @@ API documentation (Doxygen) can be built using the following command:
 ```shell
 doxygen
 ```
-
+For Windows you need to install make tools from https://gnuwin32.sourceforge.net/packages/make.htm and set environmental variables.
 The output will be stored in the ``_build_doxygen`` folder. Similarly, the
 Sphinx documentation (HTML) can be built using the following command:
 
