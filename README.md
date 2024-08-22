@@ -130,3 +130,5 @@ make html
 
 The output will be stored in the ``_build_sphinx`` folder. You may check for
 other output formats other than HTML by running ``make help``.
+
+For deployment make sure the branch is allowed to deploy to pages in github settings/environments (add your branch in there)
