@@ -36,17 +36,6 @@
 
 /** @brief Blink driver class operations */
 __subsystem struct blink_driver_api {
-	/**
-	 * @brief Configure the LED blink period.
-	 *
-	 * @param dev Blink device instance.
-	 * @param period_ms Period of the LED blink in milliseconds, 0 to
-	 * disable blinking.
-	 *
-	 * @retval 0 if successful.
-	 * @retval -EINVAL if @p period_ms can not be set.
-	 * @retval -errno Other negative errno code on failure.
-	 */
 	int (*set_period_ms)(const struct device *dev, unsigned int period_ms);
 };
 

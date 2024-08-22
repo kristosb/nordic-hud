@@ -1,3 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# MIT License
 
 add_subdirectory_ifdef(CONFIG_CUSTOM custom)
+add_subdirectory_ifdef(CONFIG_LV_HUD lv_hud)

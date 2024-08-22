@@ -21,7 +21,7 @@
 
 // BNO055
 #define BNO055_SYS_TRIGGER        0x3F
-#define BNO055_PAGE_ID_ADDR 	  0x07
+//#define BNO055_PAGE_ID_ADDR 	  0x07
 
 /*Euler data registers*/
 #define BNO055_EULER_H_LSB_ADDR             (0X1A)

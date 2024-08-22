@@ -106,7 +106,9 @@ cd doc
 ```
 
 Before continuing, check if you have Doxygen installed. It is recommended to
-use the same Doxygen version used in [CI](.github/workflows/docs.yml). To
+use the same Doxygen version used in [CI](.github/workflows/docs.yml). 
+Use doxygen 1.9.5 from https://github.com/doxygen/doxygen/releases/tag/Release_1_9_5
+To
 install Sphinx, make sure you have a Python installation in place and run:
 
 ```shell
@@ -118,7 +120,7 @@ API documentation (Doxygen) can be built using the following command:
 ```shell
 doxygen
 ```
-
+For Windows you need to install make tools from https://gnuwin32.sourceforge.net/packages/make.htm and set environmental variables.
 The output will be stored in the ``_build_doxygen`` folder. Similarly, the
 Sphinx documentation (HTML) can be built using the following command:
 
@@ -128,3 +130,5 @@ make html
 
 The output will be stored in the ``_build_sphinx`` folder. You may check for
 other output formats other than HTML by running ``make help``.
+
+For deployment make sure the branch is allowed to deploy to pages in github settings/environments (add your branch in there)

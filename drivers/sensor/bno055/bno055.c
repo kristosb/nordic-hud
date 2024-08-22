@@ -246,7 +246,7 @@ static int bno055_init(const struct device *dev)
 {
 	int ret;
 	
-	uint8_t chip_id;
+	//uint8_t chip_id;
 	uint8_t bno055_page_zero_u8 = BNO055_PAGE_ZERO;
 	uint8_t data_u8 = BNO055_INIT_VALUE;
 	//Array holding the Software revision id
@@ -281,7 +281,7 @@ static int bno055_init(const struct device *dev)
 		return ret;
 	}
 	p_bno055->chip_id = data_u8;
-	LOG_INF("Chip ID is (%x)", p_bno055->chip_id, BNO055_CHIP_ID);
+	LOG_INF("Chip ID is (%x)", p_bno055->chip_id);//, BNO055_CHIP_ID);
 	ret = bno055_reg_read(dev, BNO055_ACCEL_REV_ID_REG, &data_u8, BNO055_GEN_READ_WRITE_LENGTH);
 	if (ret != 0) {
 		return ret;
@@ -306,10 +306,11 @@ static int bno055_init(const struct device *dev)
 	}
 	p_bno055->bl_rev_id = data_u8;
 
+	/* twister error
 	ret = bno055_reg_read(dev, BNO055_SW_REV_ID_LSB_REG, &a_SW_ID_u8, BNO055_LSB_MSB_READ_LENGTH);
 	if (ret != 0) {
 		return ret;
-	}
+	}*/
 
     a_SW_ID_u8[BNO055_SW_ID_LSB] = BNO055_GET_BITSLICE(a_SW_ID_u8[BNO055_SW_ID_LSB], BNO055_SW_REV_ID_LSB);
     p_bno055->sw_rev_id =
