@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-#ifndef B70830EF_BB65_4CEE_A11C_5BFFAC319948
-#define B70830EF_BB65_4CEE_A11C_5BFFAC319948
+// #ifndef lv_pitch_ladder
+// #define B70830EF_BB65_4CEE_A11C_5BFFAC319948
 
-#ifndef LV_COMPASS_H
-#define LV_COMPASS_H
+#ifndef APP_LIB_LV_COMPASS_H_
+#define APP_LIB_LV_COMPASS_H_
 
 // #ifdef __cplusplus
 // extern "C" {
@@ -339,7 +339,7 @@ int32_t lv_comapss_get_range_max_value(lv_obj_t * obj);
 // } /*extern "C"*/
 // #endif
 
-#endif /*LV_COMPASS_H*/
+#endif /*APP_LIB_LV_COMPASS_H_*/
 
 
-#endif /* B70830EF_BB65_4CEE_A11C_5BFFAC319948 */
+// #endif /* B70830EF_BB65_4CEE_A11C_5BFFAC319948 */

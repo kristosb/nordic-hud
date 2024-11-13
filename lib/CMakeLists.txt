@@ -1,4 +1,5 @@
 # MIT License
 
 add_subdirectory_ifdef(CONFIG_CUSTOM custom)
-add_subdirectory_ifdef(CONFIG_LV_HUD lv_hud)
+add_subdirectory_ifdef(CONFIG_LV_COMPASS lv_compass)
+add_subdirectory_ifdef(CONFIG_LV_PITCH_LADDER lv_pitch_ladder)
