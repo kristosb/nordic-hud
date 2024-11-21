@@ -385,17 +385,22 @@ int main(void)
 			gyr[0].val1, gyr[0].val2,
 			gyr[1].val1, gyr[1].val2,
 			gyr[2].val1, gyr[2].val2);*/
-	unsigned int angle = 0;
+	unsigned int roll = 0;
+	int pitch = 70;
+	int dir = +1;
 	while (1) {
 		//lv_pitch_ladder_draw_numeric(0,0,angle);
-		if(angle<3600) angle += 100; else angle = 0;
+		if(roll<3600) roll += 10; else roll = 0;
+		pitch += dir;
+		if(pitch > 90) dir = -1;
+		if(pitch < -90) dir = 1;
 		//lv_refr_now(NULL);
 		lv_task_handler();
 		//lv_lock();
-		
+		//pitch = 0;
 		//lv_unlock();
-        k_msleep(1000);//SLEEP_TIME_MS);
-		lv_pitch_ladder_set_pitch(pitch_ladder_obj, angle);
+        k_msleep(500);//SLEEP_TIME_MS);
+		lv_pitch_ladder_set_angles(pitch_ladder_obj, pitch , 0);
 	}
 
 	return 0;

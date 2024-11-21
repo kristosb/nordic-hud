@@ -33,18 +33,10 @@ SOFTWARE.
 /*********************
  *      INCLUDES
  *********************/
-// #include "../../lv_conf_internal.h"
 #include <lv_conf_internal.h>
-
-//#if LV_USE_PITCH_LADDER != 0
-
-// #include "../../core/lv_obj.h"
-// #include "../line/lv_line.h"
-// #include "../image/lv_image.h"
 
 #include <core/lv_obj.h>
 #include <widgets/lv_line.h>
-//#include <widgets/lv_image.h>
 
 /*********************
  *      DEFINES
@@ -62,12 +54,22 @@ LV_EXPORT_CONST_INT(LV_PITCH_LADDER_MAJOR_TICK_EVERY_DEFAULT);
 #define LV_PITCH_LADDER_LABEL_ENABLED_DEFAULT (1U)
 LV_EXPORT_CONST_INT(LV_PITCH_LADDER_LABEL_ENABLED_DEFAULT);
 
-#define LV_PITCH_LADDE_CANVAS_WIDTH 80
-#define LV_PITCH_LADDE_CANVAS_HEIGHT 48
+#define LV_PITCH_LADDE_CANVAS_WIDTH (80U)
+#define LV_PITCH_LADDE_CANVAS_HEIGHT (53U)
 #define LV_PITCH_LADDER_HORIZ_GAP    LV_PITCH_LADDE_CANVAS_WIDTH/4
 #define LV_PITCH_LADDER_HORIZ_LEND (LV_PITCH_LADDE_CANVAS_WIDTH -LV_PITCH_LADDER_HORIZ_GAP)/2
 #define LV_PITCH_LADDER_HORIZ_RSTART LV_PITCH_LADDER_HORIZ_LEND + LV_PITCH_LADDER_HORIZ_GAP
-#define LV_PITCH_LADDER_AIM_W 8
+#define LV_PITCH_LADDER_AIM_W (8U)
+#define LV_PITCH_LADDER_SPACE (16)
+#define LV_PITCH_LADDER_THICK (4U)
+#define LV_PITCH_LADDER_LADDER_WDIFF (5U)
+#define LV_PITCH_LADDER_FONT_SIZE (14U)
+#define LV_PITCH_LADDER_LABEL_XOFFSET (4U)
+#define LV_PITCH_LADDER_ROLL_TICK LV_PITCH_LADDER_SPACE
+#define LV_PITCH_LADDER_ROLL_TICK_RANGE (4U)
+#define LV_PITCH_LADDER_LABEL_W (16U)
+#define LV_PITCH_LADDER_PITCH_SCALE (10U)
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -87,6 +89,11 @@ enum {
 typedef uint32_t lv_pitch_ladder_mode_t;
 
 typedef struct {
+    int label_value;
+    int y_offset;
+} lv_pitch_tick_info_t;
+
+typedef struct {
     lv_style_t * indicator_style;
     lv_style_t * items_style;
 } lv_pitch_ladder_section_t;
@@ -96,14 +103,10 @@ typedef struct {
     lv_ll_t section_ll;     /**< Linked list for the sections (stores lv_pitch_ladder_section_t)*/
     const char ** txt_src;
     lv_pitch_ladder_mode_t mode;
-    int32_t dir_angle;
     int32_t pitch_angle;
     int32_t roll_angle;
     uint32_t post_draw          : 1;
     uint32_t widget_draw          : 1;
-    //lv_obj_t *canvas;
-    //lv_color_t buffer[3*LV_PITCH_LADDE_CANVAS_WIDTH*LV_PITCH_LADDE_CANVAS_HEIGHT];//[3*32*18];
-    /* Private properties */
 } lv_pitch_ladder_t;
 
 extern const lv_obj_class_t lv_pitch_ladder_class;
@@ -131,7 +134,7 @@ lv_obj_t * lv_pitch_ladder_create(lv_obj_t * parent);
  * @param obj           pointer to a pitch_ladder object
  * @param pitch       pitch angle of the pitch_ladder
  */
-void lv_pitch_ladder_set_pitch(lv_obj_t * obj, int32_t pitch);
+void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int32_t roll);
 
 /*=====================
  * Getter functions
