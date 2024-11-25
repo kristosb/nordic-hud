@@ -19,7 +19,7 @@
 
 #include <app/drivers/blink.h>
 // #include <app/lib/lv_hud.h>
-//#include <app/lib/lv_compass.h>
+#include <app/lib/lv_compass.h>
 #include <app/lib/lv_pitch_ladder.h>
 
 #include <app_version.h>
@@ -225,8 +225,8 @@ void control_task_handler(struct k_work * work)
 	//lv_task_handler();
 	//printk("app event handler\n");
 }
-lv_obj_t *canvas;
-lv_color_t buffer[LV_CANVAS_BUF_SIZE_TRUE_COLOR_ALPHA(32, 18)];
+// lv_obj_t *canvas;
+// lv_color_t buffer[LV_CANVAS_BUF_SIZE_TRUE_COLOR_ALPHA(32, 18)];
 
 void display_screens_init(void)
 {
@@ -274,7 +274,8 @@ void display_screens_init(void)
 	lv_obj_align_to(screen0_y_obj, NULL, LV_ALIGN_BOTTOM_RIGHT, -15, 0);
 	screen0_y_value = 33;
 */
-pitch_ladder_obj = lv_pitch_ladder_create(lv_scr_act());
+	pitch_ladder_obj = lv_pitch_ladder_create(lv_scr_act());
+	compass_obj = lv_comapss_create(lv_scr_act());
 
 //canvas = lv_canvas_create(lv_scr_act());
 //lv_canvas_set_buffer(canvas, buffer,32, 18, LV_IMG_CF_TRUE_COLOR_ALPHA);
@@ -385,22 +386,35 @@ int main(void)
 			gyr[0].val1, gyr[0].val2,
 			gyr[1].val1, gyr[1].val2,
 			gyr[2].val1, gyr[2].val2);*/
-	unsigned int roll = 0;
-	int pitch = 70;
-	int dir = +1;
+	int16_t roll = 600;
+	int16_t rdir = 10;
+	int32_t pitch = 70;
+	int32_t dir = 1;
+	int32_t heading = 160;
+	int32_t hdir = 1;
 	while (1) {
 		//lv_pitch_ladder_draw_numeric(0,0,angle);
-		if(roll<3600) roll += 10; else roll = 0;
+		
+		if(roll > 3600) rdir = -10;
+		if(roll < -450) rdir = 10;
+		roll += rdir;
+
 		pitch += dir;
 		if(pitch > 90) dir = -1;
 		if(pitch < -90) dir = 1;
+
+		heading += hdir;
+		if(heading > 260) hdir = -1;
+		if(heading < 140) hdir = 1;
 		//lv_refr_now(NULL);
 		lv_task_handler();
 		//lv_lock();
 		//pitch = 0;
 		//lv_unlock();
-        k_msleep(500);//SLEEP_TIME_MS);
-		lv_pitch_ladder_set_angles(pitch_ladder_obj, pitch , 0);
+        
+		lv_pitch_ladder_set_angles(pitch_ladder_obj, pitch , roll);
+		lv_comapss_angle(compass_obj, heading);
+		k_msleep(200);//SLEEP_TIME_MS);
 	}
 
 	return 0;

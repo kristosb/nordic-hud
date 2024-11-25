@@ -56,6 +56,8 @@ LV_EXPORT_CONST_INT(LV_PITCH_LADDER_LABEL_ENABLED_DEFAULT);
 
 #define LV_PITCH_LADDE_CANVAS_WIDTH (80U)
 #define LV_PITCH_LADDE_CANVAS_HEIGHT (53U)
+#define LV_PITCH_LADDER_CANVAS_X_OFFSET (0U)
+#define LV_PITCH_LADDER_CANVAS_Y_OFFSET (10U)
 #define LV_PITCH_LADDER_HORIZ_GAP    LV_PITCH_LADDE_CANVAS_WIDTH/4
 #define LV_PITCH_LADDER_HORIZ_LEND (LV_PITCH_LADDE_CANVAS_WIDTH -LV_PITCH_LADDER_HORIZ_GAP)/2
 #define LV_PITCH_LADDER_HORIZ_RSTART LV_PITCH_LADDER_HORIZ_LEND + LV_PITCH_LADDER_HORIZ_GAP
@@ -104,9 +106,9 @@ typedef struct {
     const char ** txt_src;
     lv_pitch_ladder_mode_t mode;
     int32_t pitch_angle;
-    int32_t roll_angle;
+    int16_t roll_angle;
     uint32_t post_draw          : 1;
-    uint32_t widget_draw          : 1;
+    uint32_t widget_draw        : 1;
 } lv_pitch_ladder_t;
 
 extern const lv_obj_class_t lv_pitch_ladder_class;
@@ -134,7 +136,7 @@ lv_obj_t * lv_pitch_ladder_create(lv_obj_t * parent);
  * @param obj           pointer to a pitch_ladder object
  * @param pitch       pitch angle of the pitch_ladder
  */
-void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int32_t roll);
+void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll);
 
 /*=====================
  * Getter functions

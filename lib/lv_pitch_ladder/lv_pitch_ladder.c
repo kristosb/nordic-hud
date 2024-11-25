@@ -40,7 +40,7 @@ SOFTWARE.
 //#include <draw/lv_draw_arc.h>
 //#include <core/lv_obj_style_gen.h>
 //#include <extra/others/lv_others.h>
-#include <extra/others/snapshot/lv_snapshot.h>
+//#include <extra/others/snapshot/lv_snapshot.h>
 
 #include <misc/lv_txt.h>
 #include <core/lv_event.h>
@@ -51,7 +51,7 @@ SOFTWARE.
 #include <widgets/lv_canvas.h>
 #include <widgets/lv_line.h>
 
-#include <core/lv_obj_tree.h>
+//#include <core/lv_obj_tree.h>
 
 #include <lvgl.h>
 
@@ -135,7 +135,7 @@ lv_obj_t * lv_pitch_ladder_create(lv_obj_t * parent)
 /*=====================
  * Setter functions
  *====================*/
-void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int32_t roll)
+void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
@@ -146,7 +146,7 @@ void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int32_t roll)
     uint32_t btn_id = 0;
     lv_event_send(pitch_ladder, LV_PITCH_EVENT_ROTATE, &btn_id);
     // lv_obj_align(pitch_ladder->canvas, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_invalidate(obj);
+    //lv_obj_invalidate(obj);
     //lv_refr_now(NULL);
 
 }
@@ -246,8 +246,8 @@ static void lv_pitch_ladder_constructor(const lv_obj_class_t * class_p, lv_obj_t
     
     pitch_ladder->mode = LV_PITCH_LADDER_MODE_HORIZONTAL_BOTTOM;
     pitch_ladder->post_draw = false;
-    pitch_ladder->roll_angle = 0U;
-    pitch_ladder->pitch_angle = 0U;
+    pitch_ladder->roll_angle = 0;
+    pitch_ladder->pitch_angle = 0;
     pitch_ladder->txt_src = NULL;
     pitch_ladder->widget_draw = false;
 
@@ -256,22 +256,16 @@ static void lv_pitch_ladder_constructor(const lv_obj_class_t * class_p, lv_obj_t
 
     static lv_color_t buffer[3*LV_PITCH_LADDE_CANVAS_WIDTH*LV_PITCH_LADDE_CANVAS_HEIGHT];
     lv_canvas_set_buffer(canvas, buffer,LV_PITCH_LADDE_CANVAS_WIDTH, LV_PITCH_LADDE_CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR_ALPHA);
-    lv_obj_align(canvas, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(canvas, LV_ALIGN_CENTER, LV_PITCH_LADDER_CANVAS_X_OFFSET, LV_PITCH_LADDER_CANVAS_Y_OFFSET);
 
     lv_color_t c = lv_color_make(0xFF, 0xFF, 0xFF);
     lv_canvas_fill_bg(lv_obj_get_child(obj, 0), c, LV_OPA_COVER); 
 
-    // for(unsigned int i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-    //     lv_obj_t * child = lv_obj_get_child(obj, i);
-    //     /* Do something with child. */
-    //     LOG_INF("child %d", i);
-    // }
     LV_TRACE_OBJ_CREATE("finished");
 }
 
 static void lv_pitch_ladder_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 {
-
     LV_UNUSED(class_p);
     LV_TRACE_OBJ_CREATE("begin");
 
@@ -291,8 +285,9 @@ static char* format_number(int tick_label){
     lv_snprintf(buf, sizeof(buf), " %d", LV_PRId32, tick_label);
     return buf;
 }
-int32_t lv_ladder_limit(int32_t value)
+static int32_t lv_ladder_limit(int32_t value)
 {
+    int32_t result = value;
     // Does the pitch need to roll the range???
     //if(value < -90) value = -180 + value;
     //if(value > 90) value = 180 - value;
@@ -312,7 +307,7 @@ static void lv_pitch_ladder_redraw( lv_obj_t * obj, lv_event_t * event)
     int scaleStart = (floor(pitch_ladder->pitch_angle/scale)*scale-floor(scale*tickRange/2));
     int scaleStop = (floor(pitch_ladder->pitch_angle/scale)*scale+ floor(scale*tickRange/2));
 
-    LOG_INF("yoff = %d, scaleStart = %d, scaleStop = %d", yoffset, scaleStart, scaleStop);
+    //LOG_INF("yoff = %d, scaleStart = %d, scaleStop = %d", yoffset, scaleStart, scaleStop);
     int32_t pitchUp = pitch*10 + LV_PITCH_LADDER_ROLL_TICK;
     int32_t pitchDown = pitch*10 - LV_PITCH_LADDER_ROLL_TICK;
     lv_pitch_tick_info_t scaleValues[LV_PITCH_LADDER_ROLL_TICK_RANGE + 1] = {
@@ -330,11 +325,9 @@ static void lv_pitch_ladder_redraw( lv_obj_t * obj, lv_event_t * event)
         }
         if(scaleValues[i].label_value > 0){
             lv_pitch_ladder_draw_pitch_up(obj, 0, scaleValues[i].y_offset, 0);
-            LOG_INF("label+ = %d", scaleValues[i].label_value);
         }
         if(scaleValues[i].label_value < 0){
             lv_pitch_ladder_draw_pitch_down(obj, 0, scaleValues[i].y_offset, 0);
-            LOG_INF("label- = %d, ", scaleValues[i].label_value);
         }
     }
     lv_pitch_ladder_draw_aim(obj, 0, 0, 0);
