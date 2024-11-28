@@ -35,23 +35,14 @@ SOFTWARE.
 #include <draw/lv_draw.h>
 
 #include <draw/lv_draw_line.h>
-#include <draw/lv_img_buf.h>
 #include <draw/lv_draw_label.h>
-//#include <draw/lv_draw_arc.h>
-//#include <core/lv_obj_style_gen.h>
-//#include <extra/others/lv_others.h>
-//#include <extra/others/snapshot/lv_snapshot.h>
 
 #include <misc/lv_txt.h>
 #include <core/lv_event.h>
 #include <zephyr/logging/log.h>
 
-//#include <draw/lv_draw_img.h>
-#include <widgets/lv_img.h>
 #include <widgets/lv_canvas.h>
 #include <widgets/lv_line.h>
-
-//#include <core/lv_obj_tree.h>
 
 #include <lvgl.h>
 
@@ -142,10 +133,9 @@ void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll)
     pitch_ladder->pitch_angle = pitch;
     pitch_ladder->roll_angle = roll;
     pitch_ladder->widget_draw = true;
-    //lv_img_set_angle(pitch_ladder->canvas, pitch_ladder->pitch_angle);
     uint32_t btn_id = 0;
     lv_event_send(pitch_ladder, LV_PITCH_EVENT_ROTATE, &btn_id);
-    // lv_obj_align(pitch_ladder->canvas, LV_ALIGN_CENTER, 0, 0);
+
     //lv_obj_invalidate(obj);
     //lv_refr_now(NULL);
 

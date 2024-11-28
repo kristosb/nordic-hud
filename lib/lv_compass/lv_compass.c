@@ -75,7 +75,6 @@ static void lv_comapss_event(const lv_obj_class_t * class_p, lv_event_t * event)
 /**********************
  *  STATIC VARIABLES
  **********************/
-
 const lv_obj_class_t lv_comapss_class  = {
     .constructor_cb = lv_comapss_constructor,
     .destructor_cb = lv_comapss_destructor,
@@ -128,7 +127,6 @@ void lv_comapss_angle(lv_obj_t * obj, int32_t angle)
 
 static void lv_comapss_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 {
-   
     LV_UNUSED(class_p);
     LV_TRACE_OBJ_CREATE("begin");
 
@@ -143,14 +141,6 @@ static void lv_comapss_constructor(const lv_obj_class_t * class_p, lv_obj_t * ob
     comapss->txt_src = NULL;
     comapss->heading_angle = 0;
     comapss->widget_draw = false;
-
-    //lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
-
-   /*static lv_style_t indicator_style;
-    lv_style_set_line_color(&indicator_style, lv_color_black());
-    lv_style_set_width(&indicator_style, 20U); // Tick length
-    lv_style_set_line_width(&indicator_style, 2U); // Tick width
-    lv_obj_add_style(comapss, &indicator_style, LV_PART_INDICATOR);*/
 
     LV_TRACE_OBJ_CREATE("finished");
 }
@@ -175,15 +165,8 @@ static void lv_comapss_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj
 }
 static void lv_comapss_draw_label( lv_draw_ctx_t * layer, lv_draw_label_dsc_t *dsc, int16_t x, int16_t y, int16_t angle, int tick_num)
 {
-
     char buf[8] = {0};
-    // lv_draw_label_dsc_t lbl_dsc;
-    // lv_draw_label_dsc_init(&lbl_dsc);
-
-    //int tick_num = 23;
     lv_snprintf(buf, sizeof(buf), "%d", tick_num);
-    // if(tick_num >= 0) lv_snprintf(buf, sizeof(buf), " %d", tick_num); 
-    // else lv_snprintf(buf, sizeof(buf), "%d", tick_num);
         
     lv_area_t label_coords;
 
@@ -259,62 +242,27 @@ static void lv_comapss_redraw( lv_obj_t * obj, lv_event_t * event)
     lv_comapss_draw_label((struct _lv_draw_ctx_t *)layer, &label_dsc, 2, COMPAS_MAJOR_TICK_LENGHT + COMPAS_FONT_HEIGHT, 0, comapss->heading_angle);
 
 }
+
 static void lv_comapss_event(const lv_obj_class_t * class_p, lv_event_t * event)
 {
     LV_UNUSED(class_p);
 
-    /*Call the ancestor's event handler*/
     uint8_t  res = lv_obj_event_base(MY_CLASS, event);
     if(res != LV_RESULT_OK) return;
 
     lv_event_code_t event_code = lv_event_get_code(event);
     lv_obj_t * obj = lv_event_get_current_target(event);
-    //lv_comapss_t * comapss = (lv_comapss_t *) obj;
-    //LV_UNUSED(comapss);
+    lv_comapss_t * comapss = (lv_comapss_t *) obj;
+    LV_UNUSED(comapss);
 
     if(event_code == LV_EVENT_DRAW_MAIN) {
         lv_comapss_redraw(obj, event);
-        /*if(comapss->post_draw == true) {
-            
-            //comapss->widget_draw = false;
-        }
-        else{
-
-        }
-        if(comapss->post_draw == false) {
-
-
-            if(comapss->draw_ticks_on_top) {
-
-                comapss->draw_ticks_on_top = false;
-            }
-            else {
-
-            }
-        }*/
     }
     if(event_code == LV_EVENT_DRAW_POST) {
-        /*if(comapss->post_draw == true) {
-            //lv_comapss_redraw(obj, event);
-            comapss->widget_draw = false;
-        }
-        else{
 
-        }
-        if(comapss->post_draw == true) {
-
-
-            if(comapss->draw_ticks_on_top) {
-
-            }
-            else {
-
-            }
-        }*/
     }
     else if(event_code == LV_EVENT_REFR_EXT_DRAW_SIZE) {
         // NOTE: Extend comapss draw size so the first tick label can be shown
-
     }
     else {
         // Nothing to do. Invalid event 
