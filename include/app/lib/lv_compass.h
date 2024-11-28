@@ -79,6 +79,17 @@ typedef struct {
     /* Private properties */
 
 } lv_comapss_t;
+/**********************
+ * GLOBAL PROTOTYPES
+ **********************/
+
+/**
+ * Create an pitch_ladder object
+ * @param parent    pointer to an object, it will be the parent of the new pitch_ladder
+ * @return          pointer to the created pitch_ladder
+ */
+lv_obj_t * lv_compass_create(lv_obj_t * parent);
+
 /*=====================
  * Setter functions
  *====================*/

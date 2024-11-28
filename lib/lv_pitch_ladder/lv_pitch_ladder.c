@@ -134,11 +134,9 @@ void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll)
     pitch_ladder->roll_angle = roll;
     pitch_ladder->widget_draw = true;
     uint32_t btn_id = 0;
-    lv_event_send(pitch_ladder, LV_PITCH_EVENT_ROTATE, &btn_id);
-
+    lv_event_send((lv_obj_t *)pitch_ladder, LV_PITCH_EVENT_ROTATE, &btn_id);
     //lv_obj_invalidate(obj);
     //lv_refr_now(NULL);
-
 }
 
 
@@ -216,8 +214,8 @@ static void lv_pitch_ladder_draw_label( lv_obj_t * obj, int16_t x, int16_t y, in
     char buf[8] = {0};
     lv_draw_label_dsc_t lbl_dsc;
     lv_draw_label_dsc_init(&lbl_dsc);
-    if(tick_num >= 0) lv_snprintf(buf, sizeof(buf), " %d", tick_num); 
-    else lv_snprintf(buf, sizeof(buf), "%d", tick_num);
+    if(tick_num >= 0) lv_snprintf(buf, sizeof(buf), " %d", (int16_t)tick_num); 
+    else lv_snprintf(buf, sizeof(buf), "%d", (int16_t)tick_num);
     lv_canvas_draw_text(lv_obj_get_child(obj, 0), LV_PITCH_LADDE_CANVAS_WIDTH/2 + LV_PITCH_LADDER_LABEL_XOFFSET + x, LV_PITCH_LADDE_CANVAS_HEIGHT/2 -LV_PITCH_LADDER_FONT_SIZE/2 +y, 60, &lbl_dsc, buf);
 }
 
@@ -231,8 +229,8 @@ static void lv_pitch_ladder_constructor(const lv_obj_class_t * class_p, lv_obj_t
 
     _lv_ll_init(&pitch_ladder->section_ll, sizeof(lv_pitch_ladder_section_t));
 
-    lv_obj_set_size(pitch_ladder, LV_PITCH_LADDE_CANVAS_WIDTH, LV_PITCH_LADDE_CANVAS_WIDTH);
-    lv_obj_align(pitch_ladder, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_size((lv_obj_t *)pitch_ladder, LV_PITCH_LADDE_CANVAS_WIDTH, LV_PITCH_LADDE_CANVAS_WIDTH);
+    lv_obj_align((lv_obj_t *)pitch_ladder, LV_ALIGN_CENTER, 0, 0);
     
     pitch_ladder->mode = LV_PITCH_LADDER_MODE_HORIZONTAL_BOTTOM;
     pitch_ladder->post_draw = false;
@@ -270,19 +268,6 @@ static void lv_pitch_ladder_destructor(const lv_obj_class_t * class_p, lv_obj_t 
     LV_TRACE_OBJ_CREATE("finished");
 }
 
-static char* format_number(int tick_label){
-    char buf[8]= {0};
-    lv_snprintf(buf, sizeof(buf), " %d", LV_PRId32, tick_label);
-    return buf;
-}
-static int32_t lv_ladder_limit(int32_t value)
-{
-    int32_t result = value;
-    // Does the pitch need to roll the range???
-    //if(value < -90) value = -180 + value;
-    //if(value > 90) value = 180 - value;
-    return value;
-}
 static void lv_pitch_ladder_redraw( lv_obj_t * obj, lv_event_t * event)
 {
     lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *) obj;
@@ -290,22 +275,18 @@ static void lv_pitch_ladder_redraw( lv_obj_t * obj, lv_event_t * event)
     lv_color_t c = lv_color_make(0xFF, 0xFF, 0xFF);
     lv_canvas_fill_bg(lv_obj_get_child(obj, 0), c, LV_OPA_COVER); 
     int32_t yoffset = (pitch_ladder->pitch_angle%10)*LV_PITCH_LADDER_SPACE/10;
-    int32_t pitch = pitch_ladder->pitch_angle/10;
 
     int scale = LV_PITCH_LADDER_PITCH_SCALE;// tick lenght
     int tickRange = LV_PITCH_LADDER_ROLL_TICK_RANGE;  // number of ticks
     int scaleStart = (floor(pitch_ladder->pitch_angle/scale)*scale-floor(scale*tickRange/2));
-    int scaleStop = (floor(pitch_ladder->pitch_angle/scale)*scale+ floor(scale*tickRange/2));
 
     //LOG_INF("yoff = %d, scaleStart = %d, scaleStop = %d", yoffset, scaleStart, scaleStop);
-    int32_t pitchUp = pitch*10 + LV_PITCH_LADDER_ROLL_TICK;
-    int32_t pitchDown = pitch*10 - LV_PITCH_LADDER_ROLL_TICK;
     lv_pitch_tick_info_t scaleValues[LV_PITCH_LADDER_ROLL_TICK_RANGE + 1] = {
         {.y_offset = LV_PITCH_LADDER_SPACE*2 + yoffset, .label_value = scaleStart},
-        {.y_offset = LV_PITCH_LADDER_SPACE + yoffset, .label_value = lv_ladder_limit(scaleStart + LV_PITCH_LADDER_PITCH_SCALE)},
-        {.y_offset = yoffset, .label_value = lv_ladder_limit(scaleStart + 2*LV_PITCH_LADDER_PITCH_SCALE)},
-        {.y_offset = -LV_PITCH_LADDER_SPACE + yoffset, .label_value = lv_ladder_limit(scaleStart + 3*LV_PITCH_LADDER_PITCH_SCALE)},
-        {.y_offset = -LV_PITCH_LADDER_SPACE*2 + yoffset, .label_value = lv_ladder_limit(scaleStart + 4*LV_PITCH_LADDER_PITCH_SCALE)}
+        {.y_offset = LV_PITCH_LADDER_SPACE + yoffset, .label_value = scaleStart + LV_PITCH_LADDER_PITCH_SCALE},
+        {.y_offset = yoffset, .label_value = scaleStart + 2*LV_PITCH_LADDER_PITCH_SCALE},
+        {.y_offset = -LV_PITCH_LADDER_SPACE + yoffset, .label_value = scaleStart + 3*LV_PITCH_LADDER_PITCH_SCALE},
+        {.y_offset = -LV_PITCH_LADDER_SPACE*2 + yoffset, .label_value = scaleStart + 4*LV_PITCH_LADDER_PITCH_SCALE}
     };
 
     for(int i = 0; i < LV_PITCH_LADDER_ROLL_TICK_RANGE + 1; i++){

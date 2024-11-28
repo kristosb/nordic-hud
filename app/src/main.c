@@ -192,7 +192,7 @@ void  hud_style(lv_style_t *indicator_style)
 
 void control_task_handler(struct k_work * work)
 {  
-	static int screen_id = 0;
+	//static int screen_id = 0;
     //static int param_id  = 0;
 
     gpio_pin_toggle_dt(&led);
@@ -249,7 +249,7 @@ void display_screens_init(void)
 
 	lv_scr_load(screens[0].screen);
 
-	static lv_style_t indicator_style;
+	//static lv_style_t indicator_style;
 	//hud_style(&indicator_style);
 	//lv_example_comapss_1(&indicator_style);
 	//lv_pitch_ladder_init(&indicator_style);
@@ -275,7 +275,7 @@ void display_screens_init(void)
 	screen0_y_value = 33;
 */
 	pitch_ladder_obj = lv_pitch_ladder_create(lv_scr_act());
-	compass_obj = lv_comapss_create(lv_scr_act());
+	compass_obj = lv_compass_create(lv_scr_act());
 
 //canvas = lv_canvas_create(lv_scr_act());
 //lv_canvas_set_buffer(canvas, buffer,32, 18, LV_IMG_CF_TRUE_COLOR_ALPHA);

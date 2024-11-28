@@ -93,7 +93,7 @@ const lv_obj_class_t lv_comapss_class  = {
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_obj_t * lv_comapss_create(lv_obj_t * parent)
+lv_obj_t * lv_compass_create(lv_obj_t * parent)
 {
     lv_obj_t * obj = lv_obj_class_create_obj(MY_CLASS, parent);
     lv_obj_class_init_obj(obj);
@@ -133,8 +133,8 @@ static void lv_comapss_constructor(const lv_obj_class_t * class_p, lv_obj_t * ob
     lv_comapss_t * comapss = (lv_comapss_t *)obj;
     _lv_ll_init(&comapss->section_ll, sizeof(lv_comapss_section_t));
 
-    lv_obj_set_size(comapss, COMPAS_WIDTH, COMPAS_HEIGHT);
-    lv_obj_align(comapss, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_size((lv_obj_t *)comapss, COMPAS_WIDTH, COMPAS_HEIGHT);
+    lv_obj_align((lv_obj_t *)comapss, LV_ALIGN_TOP_MID, 0, 0);
 
     comapss->post_draw = false;
     comapss->draw_ticks_on_top = false;
@@ -166,7 +166,7 @@ static void lv_comapss_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj
 static void lv_comapss_draw_label( lv_draw_ctx_t * layer, lv_draw_label_dsc_t *dsc, int16_t x, int16_t y, int16_t angle, int tick_num)
 {
     char buf[8] = {0};
-    lv_snprintf(buf, sizeof(buf), "%d", tick_num);
+    lv_snprintf(buf, sizeof(buf), "%d", (int16_t)tick_num);
         
     lv_area_t label_coords;
 
@@ -211,12 +211,10 @@ static void lv_comapss_redraw( lv_obj_t * obj, lv_event_t * event)
     lv_draw_ctx_t *layer = lv_event_get_draw_ctx(event);
 
     int32_t x_offset = -(comapss->heading_angle%10)*LV_COMPASS_SPACE/10;
-    int32_t heading = comapss->heading_angle/10;
 
     int16_t scale = LV_COMPASS_SCALE;// tick lenght
     int16_t tickRange = LV_COMPASS_TICK_RANGE;  // number of ticks
     int16_t scaleStart = (floor(comapss->heading_angle/scale)*scale-floor(scale*tickRange/2));
-    int16_t scaleStop = (floor(comapss->heading_angle/scale)*scale+ floor(scale*tickRange/2));
 
     //LOG_INF("start = %d, offset = %d, heading = %d", scaleStart, xoffset, heading);
     lv_compass_tick_info_t scaleValues[LV_COMPASS_TICK_RANGE + 1] = {
