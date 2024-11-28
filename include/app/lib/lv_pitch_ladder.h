@@ -132,9 +132,10 @@ lv_obj_t * lv_pitch_ladder_create(lv_obj_t * parent);
  * Setter functions
  *====================*/
 /**
- * Set the pitch value on a pitch_ladder
- * @param obj           pointer to a pitch_ladder object
- * @param pitch       pitch angle of the pitch_ladder
+ * Set pitch and roll angles for ladder indicator.
+ * @param obj      pointer to a scale object
+ * @param pitch    pitch angle value
+ * @param roll     roll angle value
  */
 void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll);
 

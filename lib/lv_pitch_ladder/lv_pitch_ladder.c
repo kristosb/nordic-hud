@@ -126,6 +126,7 @@ lv_obj_t * lv_pitch_ladder_create(lv_obj_t * parent)
 /*=====================
  * Setter functions
  *====================*/
+
 void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
