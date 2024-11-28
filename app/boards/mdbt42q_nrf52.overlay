@@ -156,10 +156,10 @@ arduino_spi: &spi0 {
 
  arduino_spi: &spi0 {
 	cs-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
-	clock-frequency = <DT_FREQ_M(3)>;
+	clock-frequency = <DT_FREQ_M(8)>;
 	st7735s_st7735s_ada_160x128: st7735s@0 {
 		compatible = "sitronix,st7735s";
-		spi-max-frequency = <DT_FREQ_M(3)>;
+		spi-max-frequency = <DT_FREQ_M(8)>;
 		cmd-data-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
 		reset-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
 		width = <128>;
@@ -190,7 +190,7 @@ arduino_spi: &spi0 {
 };
 
 &st7735s_st7735s_ada_160x128 {
-	spi-max-frequency = <DT_FREQ_M(3)>;
+	spi-max-frequency = <DT_FREQ_M(8)>;
 };
 
 &arduino_i2c {

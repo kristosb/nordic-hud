@@ -4,6 +4,7 @@
 menu "Custom libraries"
 
 rsource "custom/Kconfig"
-rsource "lv_hud/Kconfig"
+rsource "lv_compass/Kconfig"
+rsource "lv_pitch_ladder/Kconfig"
 
 endmenu
