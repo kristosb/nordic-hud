@@ -1,7 +1,26 @@
 /*
- * Copyright (c) 2021 Nordic Semiconductor ASA
- * SPDX-License-Identifier: Apache-2.0
- */
+MIT License
+
+Copyright (c) 2024 kristosb
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */ 
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
@@ -60,6 +79,27 @@ static screens_t screens [] = {
 
 struct sensor_value gyr[3];
 
+void read_gyro_data(const struct device * gyro_dev);
+void display_gyro_data(void);
+int sensing(void);
+int display(void);
+
+void read_gyro_data(const struct device * gyro_dev)
+{
+	k_mutex_lock(&gyro_data_mutex, K_FOREVER);
+	sensor_sample_fetch(gyro_dev);
+	sensor_channel_get(gyro_dev, SENSOR_CHAN_GYRO_XYZ, gyr);
+	k_mutex_unlock(&gyro_data_mutex);
+}
+
+void display_gyro_data(void)
+{
+	k_mutex_lock(&gyro_data_mutex, K_FOREVER);
+	lv_pitch_ladder_set_angles(pitch_ladder_obj, gyr[1].val1 , gyr[2].val1*10);
+	lv_comapss_angle(compass_obj, gyr[0].val1);
+	k_mutex_unlock(&gyro_data_mutex);
+}
+
 int sensing(void)
 {
 	const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bno055_l));
@@ -73,22 +113,6 @@ int sensing(void)
 		k_msleep(SENSING_SLEEP_MS);
 		read_gyro_data(gyro_dev);
 	}
-}
-
-void read_gyro_data(struct device * gyro_dev)
-{
-	k_mutex_lock(&gyro_data_mutex, K_FOREVER);
-	sensor_sample_fetch(gyro_dev);
-	sensor_channel_get(gyro_dev, SENSOR_CHAN_GYRO_XYZ, gyr);
-	k_mutex_unlock(&gyro_data_mutex);
-}
-
-void display_gyro_data()
-{
-	k_mutex_lock(&gyro_data_mutex, K_FOREVER);
-	lv_pitch_ladder_set_angles(pitch_ladder_obj, gyr[1].val1 , gyr[2].val1*10);
-	lv_comapss_angle(compass_obj, gyr[0].val1);
-	k_mutex_unlock(&gyro_data_mutex);
 }
 
 int display(void)
