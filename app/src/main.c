@@ -44,10 +44,16 @@ SOFTWARE.
 LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 
 /* size of stack area used by each thread */
-#define STACKSIZE 1024
+#define SENS_STACKSIZE 1024
+#define DISP_STACKSIZE 8192
 #define PRIORITY 7
 #define SENSING_SLEEP_MS 100
 #define DISPLAY_SLEEP_MS 101
+
+typedef enum  screen_style_t{
+  LIGHT,
+  DARK,
+} ;
 
 K_MUTEX_DEFINE(gyro_data_mutex);
 
@@ -96,8 +102,20 @@ void display_gyro_data(void)
 {
 	k_mutex_lock(&gyro_data_mutex, K_FOREVER);
 	lv_pitch_ladder_set_angles(pitch_ladder_obj, gyr[1].val1 , gyr[2].val1*10);
-	lv_comapss_angle(compass_obj, gyr[0].val1);
+	lv_compass_angle(compass_obj, gyr[0].val1);
 	k_mutex_unlock(&gyro_data_mutex);
+}
+
+void set_screen_type(enum screen_style_t style){
+	if(style == DARK){
+		lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
+		lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
+		lv_pitch_ladder_set_dark_style(pitch_ladder_obj);
+		lv_compass_set_dark_style(compass_obj);
+	}else{
+		lv_pitch_ladder_set_light_style(pitch_ladder_obj);
+		lv_compass_set_light_style(compass_obj);
+	}
 }
 
 int sensing(void)
@@ -108,7 +126,6 @@ int sensing(void)
 		//printk("Device %s is not ready\n", gyro_dev->name);
 		return 0;
 	}
-	
 	while (1) {
 		k_msleep(SENSING_SLEEP_MS);
 		read_gyro_data(gyro_dev);
@@ -129,10 +146,16 @@ int display(void)
     screens[0].screen = lv_obj_create(NULL);
 	//printk("Screen size: %d, %d", lv_obj_get_height(screens[0].screen), lv_obj_get_width(screens[0].screen));
 	lv_scr_load(screens[0].screen);
+
 	pitch_ladder_obj = lv_pitch_ladder_create(lv_scr_act());
 	compass_obj = lv_compass_create(lv_scr_act());
 
+	set_screen_type(DARK);
+
+	//display_set_brightness(display_dev, 255);
+	//display_set_orientation(display_dev, DISPLAY_ORIENTATION_ROTATED_90);
 	display_blanking_off(display_dev);
+
 
 	while (1) {
 		display_gyro_data();
@@ -141,6 +164,6 @@ int display(void)
 	}
 }
 
-K_THREAD_DEFINE(sensing_id, STACKSIZE, sensing, NULL, NULL, NULL, PRIORITY, 0, 500);
-K_THREAD_DEFINE(display_id, 8192, display, NULL, NULL, NULL, PRIORITY, 0, 500);
+K_THREAD_DEFINE(sensing_id, SENS_STACKSIZE, sensing, NULL, NULL, NULL, PRIORITY, 0, 500);
+K_THREAD_DEFINE(display_id, DISP_STACKSIZE, display, NULL, NULL, NULL, PRIORITY, 0, 500);
 

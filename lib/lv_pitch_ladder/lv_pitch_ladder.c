@@ -140,6 +140,29 @@ void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll)
     //lv_refr_now(NULL);
 }
 
+void lv_pitch_ladder_set_dark_style(lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
+
+    lv_draw_label_dsc_t *label_dsc = &(pitch_ladder->label_dsc);
+    label_dsc->color = lv_color_make(0x00, 0x00, 0xFF);//(0x9C, 0x65, 0xCC);
+    lv_draw_line_dsc_t *line_dsc = &(pitch_ladder->line_dsc);
+    line_dsc->color = lv_color_make(0x00, 0x00, 0xFF);
+    pitch_ladder->bg = lv_color_black();
+}
+
+void lv_pitch_ladder_set_light_style(lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
+
+    lv_draw_label_dsc_t *label_dsc = &(pitch_ladder->label_dsc);
+    label_dsc->color = lv_color_black();
+    lv_draw_line_dsc_t *line_dsc = &(pitch_ladder->line_dsc);
+    line_dsc->color = lv_color_black();
+    pitch_ladder->bg = lv_color_white();
+}
 
 /*=====================
  * Getter functions
@@ -160,64 +183,49 @@ static void lv_pitch_ladder_draw_pitch_up( lv_obj_t * obj, int16_t x, int16_t y,
     const lv_point_t pts1[] = { { LV_PITCH_LADDER_HORIZ_RSTART + LV_PITCH_LADDER_LABEL_W, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDE_CANVAS_WIDTH-1 - LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}};
     const lv_point_t pts2[] = { { LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2+LV_PITCH_LADDER_THICK + y}};
     const lv_point_t pts3[] = { { LV_PITCH_LADDE_CANVAS_WIDTH-1 - LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, { LV_PITCH_LADDE_CANVAS_WIDTH-1 - LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2+LV_PITCH_LADDER_THICK + y} };
-
-    lv_draw_line_dsc_t line_dsc;
-    line_dsc.width = 2;
-    lv_draw_line_dsc_init(&line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts2, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts3, 2, &line_dsc);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts2, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts3, 2, &(pitch_ladder->line_dsc));
 
 }
 static void lv_pitch_ladder_draw_pitch_down( lv_obj_t * obj, int16_t x, int16_t y, int16_t angle)
 {
-
     const lv_point_t pts[] = { { LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDER_HORIZ_LEND, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}};
     const lv_point_t pts1[] = { { LV_PITCH_LADDER_HORIZ_RSTART + LV_PITCH_LADDER_LABEL_W, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDE_CANVAS_WIDTH-1 - LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}};
     const lv_point_t pts2[] = { { LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2-LV_PITCH_LADDER_THICK + y}};
     const lv_point_t pts3[] = { { LV_PITCH_LADDE_CANVAS_WIDTH-1 - LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, { LV_PITCH_LADDE_CANVAS_WIDTH-1 - LV_PITCH_LADDER_LADDER_WDIFF, LV_PITCH_LADDE_CANVAS_HEIGHT/2 - LV_PITCH_LADDER_THICK + y} };
-
-    lv_draw_line_dsc_t line_dsc;
-    line_dsc.width = 2;
-    lv_draw_line_dsc_init(&line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts2, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts3, 2, &line_dsc);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts2, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts3, 2, &(pitch_ladder->line_dsc));
 
 }
 static void lv_pitch_ladder_draw_horizon( lv_obj_t * obj, int16_t x, int16_t y, int16_t angle)
 {
-
     const lv_point_t pts[] = { {0, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDER_HORIZ_LEND, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}};
     const lv_point_t pts1[] = { {LV_PITCH_LADDER_HORIZ_RSTART + LV_PITCH_LADDER_LABEL_W, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDE_CANVAS_WIDTH-1, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}};
-    lv_draw_line_dsc_t line_dsc;
-
-    line_dsc.width = 2;
-    lv_draw_line_dsc_init(&line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &line_dsc);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &(pitch_ladder->line_dsc));
 }
 static void lv_pitch_ladder_draw_aim( lv_obj_t * obj, int16_t x, int16_t y, int16_t angle)
 {
     const lv_point_t pts[] = { {LV_PITCH_LADDE_CANVAS_WIDTH/2 - LV_PITCH_LADDER_AIM_W/2, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}, {LV_PITCH_LADDE_CANVAS_WIDTH/2 +LV_PITCH_LADDER_AIM_W/2, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + y}};
     const lv_point_t pts1[] = { {LV_PITCH_LADDE_CANVAS_WIDTH/2, LV_PITCH_LADDE_CANVAS_HEIGHT/2 - LV_PITCH_LADDER_AIM_W/2 +y}, {LV_PITCH_LADDE_CANVAS_WIDTH/2, LV_PITCH_LADDE_CANVAS_HEIGHT/2 + LV_PITCH_LADDER_AIM_W/2 + y}};
-    lv_draw_line_dsc_t line_dsc;
-
-    line_dsc.width = 2;
-    lv_draw_line_dsc_init(&line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &line_dsc);
-    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &line_dsc);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts, 2, &(pitch_ladder->line_dsc));
+    lv_canvas_draw_line(lv_obj_get_child(obj, 0), pts1, 2, &(pitch_ladder->line_dsc));
 }
 static void lv_pitch_ladder_draw_label( lv_obj_t * obj, int16_t x, int16_t y, int16_t angle, int tick_num)
 {
     char buf[8] = {0};
-    lv_draw_label_dsc_t lbl_dsc;
-    lv_draw_label_dsc_init(&lbl_dsc);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
     if(tick_num >= 0) lv_snprintf(buf, sizeof(buf), " %d", (int16_t)tick_num); 
     else lv_snprintf(buf, sizeof(buf), "%d", (int16_t)tick_num);
-    lv_canvas_draw_text(lv_obj_get_child(obj, 0), LV_PITCH_LADDE_CANVAS_WIDTH/2 + LV_PITCH_LADDER_LABEL_XOFFSET + x, LV_PITCH_LADDE_CANVAS_HEIGHT/2 -LV_PITCH_LADDER_FONT_SIZE/2 +y, 60, &lbl_dsc, buf);
+    lv_canvas_draw_text(lv_obj_get_child(obj, 0), LV_PITCH_LADDE_CANVAS_WIDTH/2 + LV_PITCH_LADDER_LABEL_XOFFSET + x, LV_PITCH_LADDE_CANVAS_HEIGHT/2 -LV_PITCH_LADDER_FONT_SIZE/2 +y, 60, &(pitch_ladder->label_dsc), buf);
 }
 
 static void lv_pitch_ladder_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
@@ -247,8 +255,14 @@ static void lv_pitch_ladder_constructor(const lv_obj_class_t * class_p, lv_obj_t
     lv_canvas_set_buffer(canvas, buffer,LV_PITCH_LADDE_CANVAS_WIDTH, LV_PITCH_LADDE_CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR_ALPHA);
     lv_obj_align(canvas, LV_ALIGN_CENTER, LV_PITCH_LADDER_CANVAS_X_OFFSET, LV_PITCH_LADDER_CANVAS_Y_OFFSET);
 
-    lv_color_t c = lv_color_make(0xFF, 0xFF, 0xFF);
-    lv_canvas_fill_bg(lv_obj_get_child(obj, 0), c, LV_OPA_COVER); 
+    //lv_color_t c = lv_color_make(0xFF, 0xFF, 0xFF);
+    //lv_color_t c = lv_color_make(0x00, 0xFF, 0x00);
+    lv_canvas_fill_bg(lv_obj_get_child(obj, 0), pitch_ladder->bg, LV_OPA_COVER); 
+
+    lv_draw_label_dsc_init(&(pitch_ladder->label_dsc));
+    lv_draw_line_dsc_init(&(pitch_ladder->line_dsc));
+
+    //lv_obj_set_style_bg_color((lv_obj_t *)pitch_ladder, lv_color_hex(0xFF0000), LV_PART_MAIN);
 
     LV_TRACE_OBJ_CREATE("finished");
 }
@@ -273,8 +287,8 @@ static void lv_pitch_ladder_redraw( lv_obj_t * obj, lv_event_t * event)
 {
     lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *) obj;
 
-    lv_color_t c = lv_color_make(0xFF, 0xFF, 0xFF);
-    lv_canvas_fill_bg(lv_obj_get_child(obj, 0), c, LV_OPA_COVER); 
+    //lv_color_t c = lv_color_make(0xFF, 0x00, 0x00);
+    lv_canvas_fill_bg(lv_obj_get_child(obj, 0), pitch_ladder->bg, LV_OPA_COVER); 
     int32_t yoffset = (pitch_ladder->pitch_angle%10)*LV_PITCH_LADDER_SPACE/10;
 
     int scale = LV_PITCH_LADDER_PITCH_SCALE;// tick lenght
@@ -324,7 +338,9 @@ static void lv_pitch_ladder_event(const lv_obj_class_t * class_p, lv_event_t * e
         lv_pitch_ladder_redraw(obj, event);
     }
     if(event_code == LV_EVENT_DRAW_MAIN) {
-
+        //lv_draw_ctx_t *layer = lv_event_get_draw_ctx(event);
+        //lv_canvas_fill_bg(obj, pitch_ladder->bg, LV_OPA_COVER);
+        //lv_obj_set_style_bg_color(obj, lv_color_hex(0x00FF00), LV_PART_MAIN);
     }
     if(event_code == LV_EVENT_DRAW_POST) {
 

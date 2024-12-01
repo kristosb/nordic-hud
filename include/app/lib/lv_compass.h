@@ -28,7 +28,7 @@ SOFTWARE.
 // extern "C" {
 // #endif
 
-#define LV_USE_COMAPSS 1
+#define LV_USE_COMPASS 1
 /*********************
  *      INCLUDES
  *********************/
@@ -66,19 +66,20 @@ typedef struct {
 typedef struct {
     lv_style_t * main_style;
     int32_t minor_range;
-} lv_comapss_section_t;
+} lv_compass_section_t;
 
 typedef struct {
     lv_obj_t obj;
-    lv_ll_t section_ll;     /**< Linked list for the sections (stores lv_comapss_section_t)*/
+    lv_ll_t section_ll;     /**< Linked list for the sections (stores lv_compass_section_t)*/
     const char ** txt_src;
     int32_t heading_angle;
     uint32_t post_draw          : 1;
     uint32_t draw_ticks_on_top  : 1;
     uint32_t widget_draw  : 1;
     /* Private properties */
-
-} lv_comapss_t;
+    lv_draw_label_dsc_t label_dsc;
+    lv_draw_line_dsc_t line_dsc;
+} lv_compass_t;
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -95,11 +96,21 @@ lv_obj_t * lv_compass_create(lv_obj_t * parent);
  *====================*/
 
 /**
- * Set comapss angle. 
- * @param obj       pointer the comapss object
+ * Set compass angle. 
+ * @param obj       pointer the compass object
  * @param angle      value of the angle
  */
-void lv_comapss_angle(lv_obj_t * obj, int32_t angle);
+void lv_compass_angle(lv_obj_t * obj, int32_t angle);
+/**
+ * Set compass style to dark.
+ * @param obj      pointer to a scale object
+ */
+void lv_compass_set_dark_style(lv_obj_t * obj);
+/**
+ * Set compass style to light.
+ * @param obj      pointer to a scale object
+ */
+void lv_compass_set_light_style(lv_obj_t * obj);
 /**********************
  *      MACROS
  **********************/
