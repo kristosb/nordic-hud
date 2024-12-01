@@ -109,6 +109,9 @@ typedef struct {
     int16_t roll_angle;
     uint32_t post_draw          : 1;
     uint32_t widget_draw        : 1;
+    lv_draw_label_dsc_t label_dsc;
+    lv_draw_line_dsc_t line_dsc;
+    lv_color_t bg;
 } lv_pitch_ladder_t;
 
 extern const lv_obj_class_t lv_pitch_ladder_class;
@@ -133,12 +136,27 @@ lv_obj_t * lv_pitch_ladder_create(lv_obj_t * parent);
  *====================*/
 /**
  * Set pitch and roll angles for ladder indicator.
- * @param obj      pointer to a scale object
+ * @param obj      pointer to a pitch ladder object
  * @param pitch    pitch angle value
  * @param roll     roll angle value
  */
 void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll);
-
+/**
+ * Set style to dark.
+ * @param obj      pointer to a pitch ladder object
+ */
+void lv_pitch_ladder_set_dark_style(lv_obj_t * obj);
+/**
+ * Set style to light.
+ * @param obj      pointer to a pitch ladder object
+ */
+void lv_pitch_ladder_set_light_style(lv_obj_t * obj);
+/**
+ * Set pitch ladder line width.
+ * @param obj      pointer to a pitch ladder object
+ * @param width    line width
+ */
+void lv_pitch_ladder_set_line_width(lv_obj_t * obj, lv_coord_t width);
 /*=====================
  * Getter functions
  *====================*/
