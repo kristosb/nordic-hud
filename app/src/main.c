@@ -50,10 +50,10 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 #define SENSING_SLEEP_MS 100
 #define DISPLAY_SLEEP_MS 101
 
-typedef enum  screen_style_t{
+typedef enum {
   LIGHT,
   DARK,
-} ;
+} screen_style_t;
 
 K_MUTEX_DEFINE(gyro_data_mutex);
 
@@ -106,7 +106,7 @@ void display_gyro_data(void)
 	k_mutex_unlock(&gyro_data_mutex);
 }
 
-void set_screen_type(enum screen_style_t style){
+void set_screen_type(screen_style_t style){
 	if(style == DARK){
 		lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN);
 		lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), LV_PART_MAIN);
