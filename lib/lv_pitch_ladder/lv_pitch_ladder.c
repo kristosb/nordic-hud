@@ -163,7 +163,14 @@ void lv_pitch_ladder_set_light_style(lv_obj_t * obj)
     line_dsc->color = lv_color_black();
     pitch_ladder->bg = lv_color_white();
 }
+void lv_pitch_ladder_set_line_width(lv_obj_t * obj, lv_coord_t width)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_pitch_ladder_t * pitch_ladder = (lv_pitch_ladder_t *)obj;
 
+    lv_draw_line_dsc_t *line_dsc = &(pitch_ladder->line_dsc);
+    line_dsc->width = width;
+}
 /*=====================
  * Getter functions
  *====================*/

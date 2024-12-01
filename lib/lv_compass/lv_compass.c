@@ -142,6 +142,14 @@ void lv_compass_set_light_style(lv_obj_t * obj)
     lv_draw_line_dsc_t *line_dsc = &(compass->line_dsc);
     line_dsc->color = lv_color_black();
 }
+void lv_compass_set_line_width(lv_obj_t * obj, lv_coord_t width)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_compass_t * compass = (lv_compass_t *)obj;
+
+    lv_draw_line_dsc_t *line_dsc = &(compass->line_dsc);
+    line_dsc->width = width;
+}
 /**********************
  *   STATIC FUNCTIONS
  **********************/

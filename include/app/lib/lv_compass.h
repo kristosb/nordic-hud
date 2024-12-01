@@ -111,6 +111,12 @@ void lv_compass_set_dark_style(lv_obj_t * obj);
  * @param obj      pointer to a scale object
  */
 void lv_compass_set_light_style(lv_obj_t * obj);
+/**
+ * Set compass line width.
+ * @param obj      pointer to a scale object
+ * @param width    line width
+ */
+void lv_compass_set_line_width(lv_obj_t * obj, lv_coord_t width);
 /**********************
  *      MACROS
  **********************/

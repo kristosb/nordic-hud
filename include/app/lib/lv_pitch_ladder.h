@@ -136,21 +136,27 @@ lv_obj_t * lv_pitch_ladder_create(lv_obj_t * parent);
  *====================*/
 /**
  * Set pitch and roll angles for ladder indicator.
- * @param obj      pointer to a scale object
+ * @param obj      pointer to a pitch ladder object
  * @param pitch    pitch angle value
  * @param roll     roll angle value
  */
 void lv_pitch_ladder_set_angles(lv_obj_t * obj, int32_t pitch, int16_t roll);
 /**
  * Set style to dark.
- * @param obj      pointer to a scale object
+ * @param obj      pointer to a pitch ladder object
  */
 void lv_pitch_ladder_set_dark_style(lv_obj_t * obj);
 /**
  * Set style to light.
- * @param obj      pointer to a scale object
+ * @param obj      pointer to a pitch ladder object
  */
 void lv_pitch_ladder_set_light_style(lv_obj_t * obj);
+/**
+ * Set pitch ladder line width.
+ * @param obj      pointer to a pitch ladder object
+ * @param width    line width
+ */
+void lv_pitch_ladder_set_line_width(lv_obj_t * obj, lv_coord_t width);
 /*=====================
  * Getter functions
  *====================*/
