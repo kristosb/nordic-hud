@@ -46,6 +46,7 @@ LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
 #define PRIORITY 7
 #define SENSING_SLEEP_MS 100
 #define DISPLAY_SLEEP_MS 101
+K_MUTEX_DEFINE(gyro_data_mutex);
 /**********************
  *      TYPEDEFS
  **********************/
@@ -53,8 +54,6 @@ typedef enum {
   LIGHT,
   DARK,
 } screen_style_t;
-
-K_MUTEX_DEFINE(gyro_data_mutex);
 
 typedef struct {
     lv_obj_t     ** object; 
@@ -83,6 +82,7 @@ static screens_t screens [] = {
 };
 
 struct sensor_value gyr[3];
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
