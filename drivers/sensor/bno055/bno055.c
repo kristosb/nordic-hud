@@ -257,7 +257,7 @@ static int bno055_init(const struct device *dev)
 
 	/* stuct parameters are assign to bno055*/
     p_bno055 = &bno055;
-
+	k_msleep(300);
 	ret = bno055_bus_check(dev);
 	if (ret < 0) {
 		LOG_ERR("Could not initialize bus");
@@ -275,6 +275,7 @@ static int bno055_init(const struct device *dev)
 		LOG_ERR("Could not reset");
 		return ret;
 	}
+	
 
 	ret = bno055_reg_read(dev, BNO055_CHIP_ID_REG, &data_u8, BNO055_GEN_READ_WRITE_LENGTH);
 	if (ret != 0) {

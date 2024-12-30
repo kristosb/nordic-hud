@@ -128,6 +128,7 @@ void hud_set_line_width(lv_coord_t width)
 int sensing(void)
 {
 	const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bno055_l));
+	//k_msleep(500);
 	//printk("sensing begin\n");
 	if (!device_is_ready(gyro_dev)) {
 		//printk("Device %s is not ready\n", gyro_dev->name);
@@ -141,9 +142,8 @@ int sensing(void)
 int display(void)
 {
 	const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-	//printk("Zephyr tinyHUD Application %s\n", APP_VERSION_STRING);
-	//printk("display begin\n");
-
+	printk("Zephyr tinyHUD Application %s\n", APP_VERSION_STRING);
+	// LOG_INF("display begin");
     if (display_dev == NULL) {
         LOG_ERR("Display device not found.");
         return 0;
