@@ -236,6 +236,10 @@ static void lv_compass_draw_tick_minor( lv_draw_ctx_t *layer, lv_draw_line_dsc_t
 static int32_t lv_compass_limit(int32_t value)
 {
     int32_t result = value;
+
+    // while(angle >= 3600) angle -= 3600;
+    // while(angle < 0) angle += 3600;
+
     if(value < 0) result = result + 360;
     if(value > 359) result = result - 360;
     return result;
