@@ -105,6 +105,7 @@ void read_gyro_data(const struct device * gyro_dev)
 void display_gyro_data(void)
 {
 	k_mutex_lock(&gyro_data_mutex, K_FOREVER);
+	//printk("Roll %d pitch %d \n", gyr[2].val1*10, gyr[1].val1);
 	lv_pitch_ladder_set_angles(pitch_ladder_obj, gyr[1].val1 , gyr[2].val1*10);
 	lv_compass_angle(compass_obj, gyr[0].val1);
 	k_mutex_unlock(&gyro_data_mutex);
@@ -128,6 +129,7 @@ void hud_set_line_width(lv_coord_t width)
 int sensing(void)
 {
 	const struct device *gyro_dev = DEVICE_DT_GET(DT_NODELABEL(bno055_l));
+	//k_msleep(500);
 	//printk("sensing begin\n");
 	if (!device_is_ready(gyro_dev)) {
 		//printk("Device %s is not ready\n", gyro_dev->name);
@@ -141,9 +143,7 @@ int sensing(void)
 int display(void)
 {
 	const struct device *display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-	//printk("Zephyr tinyHUD Application %s\n", APP_VERSION_STRING);
-	//printk("display begin\n");
-
+	printk("Zephyr tinyHUD Application %s\n", APP_VERSION_STRING);
     if (display_dev == NULL) {
         LOG_ERR("Display device not found.");
         return 0;
